@@ -1,0 +1,36 @@
+{
+  "name": "ibmid-login",
+  "version": "0.0.1",
+  "description": "Integrates with the IBM Identity and Account Management (IAM) and Accounts APIs to implement login using IBMid.",
+  "main": "lib/index.js",
+  "dependencies": {
+    "@types/jest": "^26.0.23",
+    "axios": "^0.21.1",
+    "memoizee": "^0.4.15"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.29.0",
+    "jest": "^27.0.5"
+  },
+  "scripts": {
+    "test": "jest --collectCoverage",
+    "lint": "eslint"
+  },
+  "keywords": [
+    "IBM",
+    "Cloud",
+    "IBM Cloud",
+    "IBMid",
+    "IAM",
+    "Identity and Access Management",
+    "Authentication",
+    "Authorization"
+  ],
+  "author": "macardoso95@gmail.com",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MarcoABCardoso/ibmid-login"
+  }
+}
