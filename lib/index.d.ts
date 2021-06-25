@@ -36,4 +36,4 @@ declare class IBMidService {
 
 }
 
-export = IBMidService
+export default IBMidService
