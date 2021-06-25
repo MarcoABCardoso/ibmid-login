@@ -13,6 +13,12 @@ beforeEach(() => {
 })
 
 describe('IBMid service', () => {
+    describe('default', () => {
+        it('Should be a properly constructed instance of IBMidService', () => {
+            expect(IBMidService.default.iamApi).toBeInstanceOf(IAMAPI)
+            expect(IBMidService.default.accountsApi).toBeInstanceOf(AccountsAPI)
+        })
+    })
     describe('#getPasscode', () => {
         it('Redirects to passcode endpoint given by well known endpoint', (done) => {
             ibmidService.getPasscode({})
