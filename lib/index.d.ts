@@ -32,7 +32,7 @@ declare class IBMidService {
     
     getOwnUser(options: Request): Promise<Response>
     
-    authenticatedFunction(func: Function): Function
+    authenticatedFunction(func: (options: Request) => Promise<Response>): (options: Request) => Promise<Response>
 
 }
 
