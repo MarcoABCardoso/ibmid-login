@@ -1,3 +1,5 @@
+import { AxiosStatic } from "axios"
+
 interface Request {
     url?: string,
     urlParams?: { [key: string]: any },
@@ -18,6 +20,8 @@ declare class IBMidService {
 
     static default: IBMidService
 
+    constructor(sendRequest: any)
+
     getPasscode(options: Request): Promise<Response>
     
     login(options: Request): Promise<Response>
@@ -27,7 +31,9 @@ declare class IBMidService {
     switchAccount(options: Request): Promise<Response>
     
     getOwnUser(options: Request): Promise<Response>
+    
+    authenticatedFunction(func: Function): Function
 
 }
 
-export = IBMidService.default
+export = IBMidService
