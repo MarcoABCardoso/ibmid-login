@@ -19,7 +19,7 @@
 ## Install
 
 ```sh
-npm install -g ibmid-login
+npm install ibmid-login
 ```
 
 ## Usage
@@ -61,6 +61,8 @@ Requesting this endpoint will erase the session's cookies;
 Send `?account_id=<NEW_ACCOUNT_ID>` to this endpoint to switch to another account. Use the method below to view available accounts;
 
 - `getOwnUser(options: Request): Promise<Response>`
+
+Send a GET to this endpoint to switch to view user details, including accounts they have access to;
 
 ## Run tests
 
