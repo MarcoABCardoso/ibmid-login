@@ -64,6 +64,10 @@ Send `?account_id=<NEW_ACCOUNT_ID>` to this endpoint to switch to another accoun
 
 Send a GET to this endpoint to switch to view user details, including accounts they have access to;
 
+- `proxy(options: Request): Promise<Response>`
+
+Passes requests onto services in the IBM Cloud;
+
 ## Run tests
 
 ```sh

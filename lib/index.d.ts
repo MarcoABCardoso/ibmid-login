@@ -20,7 +20,7 @@ declare class IBMidService {
 
     static default: IBMidService
 
-    constructor(sendRequest: any)
+    constructor()
 
     getPasscode(options: Request): Promise<Response>
     
@@ -32,7 +32,9 @@ declare class IBMidService {
     
     getOwnUser(options: Request): Promise<Response>
     
-    authenticatedFunction(func: (options: Request) => Promise<Response>): (options: Request) => Promise<Response>
+    listResources(options: Request): Promise<Response>
+    
+    proxy(options: Request): Promise<Response>
 
 }
 
