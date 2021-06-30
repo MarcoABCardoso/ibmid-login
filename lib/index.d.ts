@@ -34,6 +34,8 @@ declare class IBMidService {
     
     listResources(options: Request): Promise<Response>
     
+    manageResource(options: Request): Promise<Response>
+    
     proxy(options: Request): Promise<Response>
 
 }
