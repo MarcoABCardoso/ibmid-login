@@ -59,6 +59,26 @@ describe('IBMid service', () => {
                     })
             })
         })
+        describe('When apikey is passed', () => {
+            it('Generates an IAM token and does not attempt to refresh it', (done) => {
+                ibmidService.login({ data: { apikey: 'foo_apikey' } })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({
+                            'body': { 'success': true, 'token': 'foo_token_for_apikey_foo_apikey', 'expires_in': 1337, 'refresh_token': 'not_supported' },
+                            'headers': {
+                                'Set-Cookie': [
+                                    'token=foo_token_for_apikey_foo_apikey; Max-Age=1337; Path=/; HttpOnly',
+                                    'refresh_token=not_supported; Max-Age=32088; Path=/; HttpOnly',
+                                    'account_id=null; Max-Age=32088; Path=/; HttpOnly'
+                                ]
+                            },
+                            'statusCode': 200,
+                        })
+                        done()
+                    })
+            })
+        })
         describe('When no accounts are allowed', () => {
             it('Returns RC 401', (done) => {
                 ibmidService.login({ data: { passcode: 'foo_passcode_not_allowed' } })

@@ -6,6 +6,7 @@ let tokenPasscodeSuccessResponse = passcode => ({ status: 200, data: { access_to
 let tokenPasscodeFailureResponse = { response: { status: 400, data: { errorMessage: 'Provided passcode is invalid' } } }
 let tokenRefreshSuccessResponse = account => ({ status: 200, data: { access_token: `foo_refreshed_token_for_account_${account}`, refresh_token: `foo_refresh_token_for_account_${account}`, expires_in: 1337 } })
 let tokenRefreshFailureResponse = { response: { status: 400, data: { errorMessage: 'Provided refresh_token is invalid' } } }
+let tokenApikeySuccessResponse = apikey => ({ status: 200, data: { access_token: `foo_token_for_apikey_${apikey}`, refresh_token: 'not_supported', expires_in: 1337 } })
 let accountsSuccessResponse = { status: 200, data: { resources: [{ metadata: { guid: 'foo_invalid_account_guid' } }, { metadata: { guid: 'foo_account_guid' } }, { metadata: { guid: 'foo_new_account_guid' } }] } }
 let accountsNotAllowedSuccessResponse = { status: 200, data: { resources: [{ metadata: { guid: 'foo_unallowed_account_guid' } }] } }
 let accountsFailureResponse = notLoggedInResponse()
@@ -47,9 +48,12 @@ const defaultResponseMap = {
             x.params.passcode.includes('invalid') ?
                 Promise.reject(tokenPasscodeFailureResponse) :
                 Promise.resolve(tokenPasscodeSuccessResponse(x.params.passcode)) :
-            (x.params.refresh_token.includes('invalid') || (x.params.account && x.params.account.includes('invalid'))) ?
-                Promise.reject(tokenRefreshFailureResponse) :
-                Promise.resolve(tokenRefreshSuccessResponse(x.params.account))
+            x.params.refresh_token ?
+                (x.params.refresh_token.includes('invalid') || (x.params.account && x.params.account.includes('invalid')) || x.params.refresh_token == 'not_supported') ?
+                    Promise.reject(tokenRefreshFailureResponse) :
+                    Promise.resolve(tokenRefreshSuccessResponse(x.params.account)) :
+                Promise.resolve(tokenApikeySuccessResponse(x.params.apikey))
+
     ),
     [`${ACCOUNTS_URL}/v1/accounts`]: jest.fn(
         x => x.headers.Authorization.includes('not_allowed') ?
