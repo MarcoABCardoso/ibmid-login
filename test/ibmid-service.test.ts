@@ -330,7 +330,7 @@ describe('IBMid service', () => {
         })
         describe('For DSX resources', () => {
             it('Builds URL from resource', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path", "urlParams": { "resource_id": "foo_resource_id_dsx" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path", "urlParams": { "resource_id": "watson_data" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })

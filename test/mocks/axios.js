@@ -28,7 +28,6 @@ let resourceNoKeysConversationSuccessResponse = { status: 200, data: { id: 'foo_
 let resourceMissingSuccessResponse = { status: 200, data: { status_code: 404 } }
 let functionsResourceSuccessResponse = { status: 200, data: { guid: '_:foo_resource_guid::', resource_id: 'functions', region_id: 'foo-region' } }
 let dashboardsResourceSuccessResponse = { status: 200, data: { id: 'foo_resource_id_dashboards', guid: 'foo_resource_guid_dashboards' } }
-let dsxResourceSuccessResponse = { status: 200, data: { id: 'foo_resource_id_dsx', guid: 'foo_resource_guid_dsx', crn: 'data-science-experience' } }
 let endpointsResourceSuccessResponse = { status: 200, data: { id: 'foo_resource_id_endpoints', guid: 'foo_resource_guid_endpoints' } }
 let resourceListSuccessResponsePaged = { status: 200, data: { rows_count: 2, next_url: '/v2/resource_instances?next_docid=foo_docid', resources: ['foo_resource_1', 'foo_resource_2'] } }
 let resourceListSuccessResponse = { status: 200, data: { rows_count: 2, resources: ['foo_resource_3', 'foo_resource_4'] } }
@@ -72,7 +71,6 @@ const defaultResponseMap = {
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_conversation`]: jest.fn(() => Promise.resolve(resourceNoKeysConversationSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_missing`]: jest.fn(() => Promise.resolve(resourceMissingSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_functions`]: jest.fn(() => Promise.resolve(functionsResourceSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dsx`]: jest.fn(() => Promise.resolve(dsxResourceSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards`]: jest.fn(() => Promise.resolve(dashboardsResourceSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_endpoints`]: jest.fn(() => Promise.resolve(endpointsResourceSuccessResponse)),
     'foo_service_url/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
