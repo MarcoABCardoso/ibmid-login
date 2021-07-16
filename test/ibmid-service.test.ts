@@ -7,10 +7,11 @@ const AccountsAPI = require('../lib/internal/accounts-api')
 const IAMAPI = require('../lib/internal/iam-api')
 const { notLoggedInResponse } = require('../lib/responses')
 const mockAxios = require('./mocks/axios')
+const mockJwksClient = require('./mocks/jwksClient')
 
 let ibmidService
 beforeEach(() => {
-    let iamApi = new IAMAPI(mockAxios())
+    let iamApi = new IAMAPI(mockAxios(), mockJwksClient)
     let accountsApi = new AccountsAPI(mockAxios())
     let globalCatalogApi = new GlobalCatalogAPI(mockAxios())
     let resourceControllerApi = new ResourceControllerAPI(mockAxios())
@@ -202,26 +203,52 @@ describe('IBMid service', () => {
         })
     })
     describe('#getOwnUser', () => {
-        describe('When account listing succeeds (valid token)', () => {
+        describe('When token is valid', () => {
             it('Returns the user with their accounts', (done) => {
-                ibmidService.getOwnUser({ headers: {}, 'cookies': { 'token': 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIifQ.ydIq72Q8StGFtH55QBJj6uhugHl8XZXROUR5IAkzrHM', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.getOwnUser({ headers: {}, 'cookies': { 'token': 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIn0.XQQN371DyErrJ8kTK7w-rTX94m4v3jfHS0Z98ttALj6xD2jBu0WZ91ID53K6tZlVs4DgPtEw2Tykjd0yZszUqARZxJu4zOVauCsoQyjfx-ZIpCG9v7im_EZ06YNaiGgsREgxr3qsA-MkUY-5dQcl8OIkwKtnQWjwIXHptQwxfJ4', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
                             'statusCode': 200,
                             'headers': {},
-                            'body': { 'account': 'foo_account_guid', 'accounts': [{ 'metadata': { 'guid': 'foo_invalid_account_guid' } }, { 'metadata': { 'guid': 'foo_account_guid' } }, { 'metadata': { 'guid': 'foo_new_account_guid' } }], 'foo': 'bar' },
+                            'body': { 'foo_user_field': 'foo_user_value' },
+                        })
+                        done()
+                    })
+            })
+        })
+        describe('When token is invalid', () => {
+            it('Returns RC 401', (done) => {
+                ibmidService.getOwnUser({ headers: {}, 'cookies': { 'token': 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIiwiZXhwIjowfQ.H50OWcUkfmMD1jISDHLypRImzlUBEAAJ658GOqvBPo2XUSeoqG1am8XXe18LdsHa6j5m40rpXCXriIwiyai7CqOyJ0iRlGIcfoBozv5GR1eDilQjwQdm7JUMJLBtC57qbJ-iG8qh1ViX0GcqLPGaSTNeLOrpXIV1jS2EdnKHWOA', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual(notLoggedInResponse())
+                        done()
+                    })
+            })
+        })
+    })
+    describe('#listAccounts', () => {
+        describe('When account listing succeeds (valid token)', () => {
+            it('Returns the allowed account list', (done) => {
+                ibmidService.listAccounts({ headers: {}, 'cookies': { 'token': 'foo_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': { "resources": [{ "metadata": { "guid": "foo_invalid_account_guid" } }, { "metadata": { "guid": "foo_account_guid" } }, { "metadata": { "guid": "foo_new_account_guid" } }] },
                         })
                         done()
                     })
             })
         })
         describe('When account listing fails (invalid token)', () => {
-            it('Returns RC 401', (done) => {
-                ibmidService.getOwnUser({ headers: {}, 'cookies': { 'token': 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJIUzI1NiJ9.eyJmb28iOiJiYXIifQ.ydIq72Q8StGFtH55QBJj6uhugHl8XZXROUR5IAkzrHM_invalid', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+            it('Returns account listing response as is', (done) => {
+                ibmidService.listAccounts({ headers: {}, 'cookies': { 'token': 'foo_failure_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual(notLoggedInResponse())
+                        expect(data).toEqual({ "statusCode": 400, "body": { "errorMessage": "Account listing failed for some reason" }, "headers": {} })
                         done()
                     })
             })

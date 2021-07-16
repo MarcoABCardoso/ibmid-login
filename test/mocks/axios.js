@@ -1,5 +1,4 @@
 const { ACCOUNTS_URL, IAM_URL, RESOURCE_CONTROLLER_URL, GLOBAL_CATALOG_URL } = require('../../lib/config/constants')
-const { notLoggedInResponse } = require('../../lib/responses')
 
 let openIdConfigSuccessResponse = { status: 200, data: { passcode_endpoint: 'foo_host/identity/passcode' } }
 let tokenPasscodeSuccessResponse = passcode => ({ status: 200, data: { access_token: `foo_token_for_passcode_${passcode}`, refresh_token: `foo_token_for_passcode_${passcode}`, expires_in: 1337 } })
@@ -9,7 +8,7 @@ let tokenRefreshFailureResponse = { response: { status: 400, data: { errorMessag
 let tokenApikeySuccessResponse = apikey => ({ status: 200, data: { access_token: `foo_token_for_apikey_${apikey}`, refresh_token: 'not_supported', expires_in: 1337 } })
 let accountsSuccessResponse = { status: 200, data: { resources: [{ metadata: { guid: 'foo_invalid_account_guid' } }, { metadata: { guid: 'foo_account_guid' } }, { metadata: { guid: 'foo_new_account_guid' } }] } }
 let accountsNotAllowedSuccessResponse = { status: 200, data: { resources: [{ metadata: { guid: 'foo_unallowed_account_guid' } }] } }
-let accountsFailureResponse = notLoggedInResponse()
+let accountsFailureResponse = { response: { status: 400, data: { errorMessage: 'Account listing failed for some reason' } } }
 
 let catalogSuccessResponse = {
     status: 200,
@@ -55,10 +54,10 @@ const defaultResponseMap = {
 
     ),
     [`${ACCOUNTS_URL}/v1/accounts`]: jest.fn(
-        x => x.headers.Authorization.includes('not_allowed') ?
-            Promise.resolve(accountsNotAllowedSuccessResponse) :
-            x.headers.Authorization.includes('invalid') ?
-                Promise.reject(accountsFailureResponse) :
+        x => x.headers.Authorization.includes('failure') ?
+            Promise.reject(accountsFailureResponse) :
+            x.headers.Authorization.includes('not_allowed') ?
+                Promise.resolve(accountsNotAllowedSuccessResponse) :
                 Promise.resolve(accountsSuccessResponse)
     ),
     [`${GLOBAL_CATALOG_URL}/api/v1`]: jest.fn(() => Promise.resolve(catalogSuccessResponse)),

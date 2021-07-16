@@ -50,7 +50,7 @@ Open a new tab to this endpoint to generate a passcode the end user can log in w
 
 - `login(options: Request): Promise<Response>`
 
-Send `{ passcode: "<PASSCODE FROM IBM CLOUD>" }` to this endpoint to log in. The session will be stored as a cookie;
+Send `{ passcode: "<PASSCODE FROM IBM CLOUD>" }` to this endpoint to log in. The current user will be stored as a cookie;
 
 - `logout(options: Request): Promise<Response>`
 
@@ -60,9 +60,13 @@ Requesting this endpoint will erase the session's cookies;
 
 Send `?account_id=<NEW_ACCOUNT_ID>` to this endpoint to switch to another account. Use the method below to view available accounts;
 
+- `listAccounts(options: Request): Promise<Response>`
+
+Lists accounts the current user has access to;
+
 - `getOwnUser(options: Request): Promise<Response>`
 
-Send a GET to this endpoint to switch to view user details, including accounts they have access to;
+Get current user details. Will also check the token for validity (with IAM RSA keys);
 
 - `manageResource(options: Request): Promise<Response>`
 

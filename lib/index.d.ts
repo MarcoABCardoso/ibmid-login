@@ -32,6 +32,8 @@ declare class IBMidService {
     
     getOwnUser(options: Request): Promise<Response>
     
+    listAccounts(options: Request): Promise<Response>
+
     listResources(options: Request): Promise<Response>
     
     manageResource(options: Request): Promise<Response>
