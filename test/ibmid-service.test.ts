@@ -159,14 +159,10 @@ describe('IBMid service', () => {
         })
         describe('When token refresh fails', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.switchAccount({ params: { account_id: 'foo_new_account_guid' }, headers: {}, 'cookies': { 'token': 'foo_token', 'refresh_token': 'foo_invalid_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.switchAccount({ params: { account_id: 'foo_new_account_guid' }, headers: {}, 'cookies': { 'refresh_token': 'foo_invalid_refresh_token', 'account_id': 'foo_account_guid' } })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({
-                            'body': { 'message': 'Provided refresh_token is invalid', 'success': false },
-                            'headers': {},
-                            'statusCode': 401,
-                        })
+                        expect(data).toEqual(notLoggedInResponse())
                         done()
                     })
             })
