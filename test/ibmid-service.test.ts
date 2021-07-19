@@ -392,6 +392,16 @@ describe('IBMid service', () => {
             })
         })
         describe('For global services', () => {
+            describe('When listing endpoints', () => {
+                it('Lists endpoints', (done) => {
+                    ibmidService.proxy({ method: "FOO_METHOD", url: `/endpoints`, "urlParams": { "resource_id": "foo_resource_id_endpoints" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: { 'x-endpoint-id': 'foo:path:to:endpoint' } })
+                        .catch(err => done.fail(err))
+                        .then(data => {
+                            expect(data).toEqual({ "body": { foo: { path: { to: { endpoint: 'foo_global_resource_url' } } } }, "headers": {}, "statusCode": 200 })
+                            done()
+                        })
+                })
+            })
             describe('When service endpoint is provided', () => {
                 it('Builds URL from endpoints response', (done) => {
                     ibmidService.proxy({ method: "FOO_METHOD", url: `/foo_path`, "urlParams": { "resource_id": "foo_resource_id_endpoints" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: { 'x-endpoint-id': 'foo:path:to:endpoint' } })

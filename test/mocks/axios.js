@@ -33,7 +33,7 @@ let resourceListSuccessResponse = { status: 200, data: { rows_count: 2, resource
 let keysSuccessResponse = { status: 200, data: { resources: [{ role: 'Manager', guid: 'foo_account_guid', credentials: { url: 'foo_service_url' } }] } }
 let noKeysSuccessResponse = { status: 200, data: { resources: [] } }
 let dashboardKeysSuccessResponse = { status: 200, data: { resources: [{ role: 'Manager', guid: 'foo_account_guid', credentials: { api_endpoint_url: 'foo_service_url/daas/' } }] } }
-let endpointsKeysSuccessResponse = { status: 200, data: { resources: [{ role: 'Manager', guid: 'foo_account_guid', credentials: { endpoints: 'foo_endpoints_url' } }] } }
+let endpointsKeysSuccessResponse = { status: 200, data: { resources: [{ role: 'Manager', guid: 'foo_account_guid', credentials: { endpoints: 'foo_endpoints_url/endpoints' } }] } }
 let endpointsSuccessResponse = { status: 200, data: { foo: { path: { to: { endpoint: 'foo_global_resource_url' } } } } }
 let proxySuccessResponse = { status: 200, data: { foo: 'data' }, headers: { foo: 'headers' } }
 let proxyFailureResponse = { response: { status: 500, data: { foo: 'error' }, headers: { foo: 'error-headers' } } }
@@ -83,7 +83,7 @@ const defaultResponseMap = {
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards/resource_keys`]: jest.fn(() => Promise.resolve(dashboardKeysSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_endpoints/resource_keys`]: jest.fn(() => Promise.resolve(endpointsKeysSuccessResponse)),
 
-    'foo_endpoints_url': jest.fn(() => Promise.resolve(endpointsSuccessResponse)),
+    'foo_endpoints_url/endpoints': jest.fn(() => Promise.resolve(endpointsSuccessResponse)),
     'https://foo_global_resource_url/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
     'https://api.foo-region.assistant.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_conversation/foo_endpoint': jest.fn(() => Promise.resolve(proxySuccessResponse)),
     'https://api.dataplatform.cloud.ibm.com/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
