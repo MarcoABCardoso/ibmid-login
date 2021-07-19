@@ -9,7 +9,7 @@ const { notLoggedInResponse } = require('../lib/responses')
 const mockAxios = require('./mocks/axios')
 const mockJwksClient = require('./mocks/jwksClient')
 
-let ibmidService
+let ibmidService = IBMidService.default
 beforeEach(() => {
     let iamApi = new IAMAPI(mockAxios(), mockJwksClient)
     let accountsApi = new AccountsAPI(mockAxios())
@@ -27,7 +27,7 @@ describe('IBMid service', () => {
     })
     describe('#getPasscode', () => {
         it('Redirects to passcode endpoint given by well known endpoint', (done) => {
-            ibmidService.getPasscode({})
+            ibmidService.getPasscode()
                 .catch(err => done.fail(err))
                 .then(data => {
                     expect(data).toEqual({
@@ -42,7 +42,7 @@ describe('IBMid service', () => {
     describe('#login', () => {
         describe('When login succeeds', () => {
             it('Generates an IAM token, lists accounts and refreshes the token with the first account guid', (done) => {
-                ibmidService.login({ data: { passcode: 'foo_passcode' } })
+                ibmidService.login({ passcode: 'foo_passcode' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -62,7 +62,7 @@ describe('IBMid service', () => {
         })
         describe('When apikey is passed', () => {
             it('Generates an IAM token and does not attempt to refresh it', (done) => {
-                ibmidService.login({ data: { apikey: 'foo_apikey' } })
+                ibmidService.login({ apikey: 'foo_apikey' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -82,7 +82,7 @@ describe('IBMid service', () => {
         })
         describe('When no accounts are allowed', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.login({ data: { passcode: 'foo_passcode_not_allowed' } })
+                ibmidService.login({ passcode: 'foo_passcode_not_allowed' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -92,7 +92,7 @@ describe('IBMid service', () => {
         })
         describe('When login fails', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.login({ data: { passcode: 'foo_passcode_invalid' } })
+                ibmidService.login({ passcode: 'foo_passcode_invalid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -106,7 +106,7 @@ describe('IBMid service', () => {
     })
     describe('#logout', () => {
         it('Clears login related cookies', (done) => {
-            ibmidService.logout({})
+            ibmidService.logout()
                 .catch(err => done.fail(err))
                 .then(data => {
                     expect(data).toEqual({
@@ -121,7 +121,7 @@ describe('IBMid service', () => {
     describe('#switchAccount', () => {
         describe('When token refresh succeeds', () => {
             it('Generates a new IAM token using new account guid', (done) => {
-                ibmidService.switchAccount({ params: { account_id: 'foo_new_account_guid' }, headers: {}, 'cookies': { 'token': 'foo_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.switchAccount({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_new_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -135,7 +135,7 @@ describe('IBMid service', () => {
         })
         describe('When account id is not passed', () => {
             it('Refreshes the session', (done) => {
-                ibmidService.switchAccount({ params: {}, headers: {}, 'cookies': { 'token': 'foo_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.switchAccount({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -149,7 +149,7 @@ describe('IBMid service', () => {
         })
         describe('When user tries to switch to a not allowed account', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.switchAccount({ params: { account_id: 'foo_not_allowed_account_guid' }, headers: {}, 'cookies': { 'token': 'foo_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.switchAccount({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_not_allowed_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -159,7 +159,7 @@ describe('IBMid service', () => {
         })
         describe('When token refresh fails', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.switchAccount({ params: { account_id: 'foo_new_account_guid' }, headers: {}, 'cookies': { 'refresh_token': 'foo_invalid_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.switchAccount({ refreshToken: 'foo_invalid_refresh_token', accountID: 'foo_new_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -169,7 +169,7 @@ describe('IBMid service', () => {
         })
         describe('When token is not present', () => {
             it('Refreshes token and switches account', (done) => {
-                ibmidService.switchAccount({ params: { account_id: 'foo_new_account_guid' }, headers: {}, 'cookies': { 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.switchAccount({ refreshToken: 'foo_refresh_token', accountID: 'foo_new_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -189,7 +189,7 @@ describe('IBMid service', () => {
         })
         describe('When refresh token is not present', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.switchAccount({ params: { account_id: 'foo_new_account_guid' }, headers: {}, cookies: {} })
+                ibmidService.switchAccount({ accountID: 'foo_new_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -201,7 +201,7 @@ describe('IBMid service', () => {
     describe('#getOwnUser', () => {
         describe('When token is valid', () => {
             it('Returns the user with their accounts', (done) => {
-                ibmidService.getOwnUser({ headers: {}, 'cookies': { 'token': 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIn0.XQQN371DyErrJ8kTK7w-rTX94m4v3jfHS0Z98ttALj6xD2jBu0WZ91ID53K6tZlVs4DgPtEw2Tykjd0yZszUqARZxJu4zOVauCsoQyjfx-ZIpCG9v7im_EZ06YNaiGgsREgxr3qsA-MkUY-5dQcl8OIkwKtnQWjwIXHptQwxfJ4', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.getOwnUser({ token: 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIn0.XQQN371DyErrJ8kTK7w-rTX94m4v3jfHS0Z98ttALj6xD2jBu0WZ91ID53K6tZlVs4DgPtEw2Tykjd0yZszUqARZxJu4zOVauCsoQyjfx-ZIpCG9v7im_EZ06YNaiGgsREgxr3qsA-MkUY-5dQcl8OIkwKtnQWjwIXHptQwxfJ4', refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
@@ -215,7 +215,7 @@ describe('IBMid service', () => {
         })
         describe('When token is invalid', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.getOwnUser({ headers: {}, 'cookies': { 'token': 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIiwiZXhwIjowfQ.H50OWcUkfmMD1jISDHLypRImzlUBEAAJ658GOqvBPo2XUSeoqG1am8XXe18LdsHa6j5m40rpXCXriIwiyai7CqOyJ0iRlGIcfoBozv5GR1eDilQjwQdm7JUMJLBtC57qbJ-iG8qh1ViX0GcqLPGaSTNeLOrpXIV1jS2EdnKHWOA', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.getOwnUser({ token: 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIiwiZXhwIjowfQ.H50OWcUkfmMD1jISDHLypRImzlUBEAAJ658GOqvBPo2XUSeoqG1am8XXe18LdsHa6j5m40rpXCXriIwiyai7CqOyJ0iRlGIcfoBozv5GR1eDilQjwQdm7JUMJLBtC57qbJ-iG8qh1ViX0GcqLPGaSTNeLOrpXIV1jS2EdnKHWOA', refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -227,13 +227,13 @@ describe('IBMid service', () => {
     describe('#listAccounts', () => {
         describe('When account listing succeeds (valid token)', () => {
             it('Returns the allowed account list', (done) => {
-                ibmidService.listAccounts({ headers: {}, 'cookies': { 'token': 'foo_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.listAccounts({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
                             'statusCode': 200,
                             'headers': {},
-                            'body': { "resources": [{ "metadata": { "guid": "foo_invalid_account_guid" } }, { "metadata": { "guid": "foo_account_guid" } }, { "metadata": { "guid": "foo_new_account_guid" } }] },
+                            'body': { 'resources': [{ 'metadata': { 'guid': 'foo_invalid_account_guid' } }, { 'metadata': { 'guid': 'foo_account_guid' } }, { 'metadata': { 'guid': 'foo_new_account_guid' } }] },
                         })
                         done()
                     })
@@ -241,10 +241,10 @@ describe('IBMid service', () => {
         })
         describe('When account listing fails (invalid token)', () => {
             it('Returns account listing response as is', (done) => {
-                ibmidService.listAccounts({ headers: {}, 'cookies': { 'token': 'foo_failure_token', 'refresh_token': 'foo_refresh_token', 'account_id': 'foo_account_guid' } })
+                ibmidService.listAccounts({ token: 'foo_failure_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({ "statusCode": 400, "body": { "errorMessage": "Account listing failed for some reason" }, "headers": {} })
+                        expect(data).toEqual({ 'statusCode': 400, 'body': { 'errorMessage': 'Account listing failed for some reason' }, 'headers': {} })
                         done()
                     })
             })
@@ -252,26 +252,26 @@ describe('IBMid service', () => {
     })
     describe('#manageResource', () => {
         it('Forwards the request to the service URL', (done) => {
-            ibmidService.manageResource({ method: "FOO_METHOD", url: "", "urlParams": { "resource_id": "foo_resource_id" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+            ibmidService.manageResource({ method: 'FOO_METHOD', url: '', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                 .catch(err => done.fail(err))
                 .then(data => {
                     expect(data).toEqual({
-                        "statusCode": 200,
-                        "headers": {},
-                        "body": { "id": "foo_resource_id", "guid": "foo_resource_guid" },
+                        'statusCode': 200,
+                        'headers': {},
+                        'body': { 'id': 'foo_resource_id', 'guid': 'foo_resource_guid' },
                     })
                     done()
                 })
         })
         describe('When the service management fails', () => {
             it('Forwards the error response', (done) => {
-                ibmidService.manageResource({ method: "FOO_METHOD", url: "", "urlParams": { "resource_id": "foo_resource_id_error" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.manageResource({ method: 'FOO_METHOD', url: '', resourceID: 'foo_resource_id_error', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            "statusCode": 500,
-                            "headers": { "foo": "error-headers" },
-                            "body": { "foo": "error" },
+                            'statusCode': 500,
+                            'headers': { 'foo': 'error-headers' },
+                            'body': { 'foo': 'error' },
                         })
                         done()
                     })
@@ -281,26 +281,26 @@ describe('IBMid service', () => {
     describe('#proxy', () => {
         describe('For default services', () => {
             it('Forwards the request to the service URL', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path", "urlParams": { "resource_id": "foo_resource_id" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            "statusCode": 200,
-                            "headers": { "foo": "headers" },
-                            "body": { "foo": "data" },
+                            'statusCode': 200,
+                            'headers': { 'foo': 'headers' },
+                            'body': { 'foo': 'data' },
                         })
                         done()
                     })
             })
             describe('When the service has no keys', () => {
                 it('Returns RC 404', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_endpoint", "urlParams": { "resource_id": "foo_resource_id_no_keys" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_endpoint', resourceID: 'foo_resource_id_no_keys', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                         .catch(err => done.fail(err))
                         .then(data => {
                             expect(data).toEqual({
-                                "statusCode": 404,
-                                "headers": {},
-                                "body": { "message": "Resource not found" },
+                                'statusCode': 404,
+                                'headers': {},
+                                'body': { 'message': 'Resource not found' },
                             })
                             done()
                         })
@@ -308,13 +308,13 @@ describe('IBMid service', () => {
             })
             describe('When the service has no keys, but is a conversation instance', () => {
                 it('Forwards the request to the service URL', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_endpoint", "urlParams": { "resource_id": "foo_resource_id_no_keys_conversation" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_endpoint', resourceID: 'foo_resource_id_no_keys_conversation', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                         .catch(err => done.fail(err))
                         .then(data => {
                             expect(data).toEqual({
-                                "statusCode": 200,
-                                "headers": { "foo": "headers" },
-                                "body": { "foo": "data" },
+                                'statusCode': 200,
+                                'headers': { 'foo': 'headers' },
+                                'body': { 'foo': 'data' },
                             })
                             done()
                         })
@@ -322,20 +322,20 @@ describe('IBMid service', () => {
             })
             describe('When service request fails', () => {
                 it('Forwards the error response', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path_error", "urlParams": { "resource_id": "foo_resource_id" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path_error', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                         .catch(err => done.fail(err))
                         .then(data => {
-                            expect(data).toEqual({ "body": { "foo": "error" }, "headers": { "foo": "error-headers" }, "statusCode": 500 })
+                            expect(data).toEqual({ 'body': { 'foo': 'error' }, 'headers': { 'foo': 'error-headers' }, 'statusCode': 500 })
                             done()
                         })
                 })
             })
             describe('When service is not found', () => {
                 it('Responds with RC 404', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path", "urlParams": { "resource_id": "foo_resource_id_missing" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id_missing', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                         .catch(err => done.fail(err))
                         .then(data => {
-                            expect(data).toEqual({ "body": { "message": "Resource not found" }, "headers": {}, "statusCode": 404 })
+                            expect(data).toEqual({ 'body': { 'message': 'Resource not found' }, 'headers': {}, 'statusCode': 404 })
                             done()
                         })
                 })
@@ -343,50 +343,50 @@ describe('IBMid service', () => {
         })
         describe('For dashboard services', () => {
             it('Does not include authorization headers in request', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: "/daas/foo_path", "urlParams": { "resource_id": "foo_resource_id_dashboards" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/daas/foo_path', resourceID: 'foo_resource_id_dashboards', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
                         done()
                     })
             })
         })
         describe('For DSX resources', () => {
             it('Builds URL from resource', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path", "urlParams": { "resource_id": "watson_data" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'watson_data', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
                         done()
                     })
             })
         })
         describe('For functions services', () => {
             it('Builds URL from resource', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: "/foo_path", "urlParams": { "resource_id": "foo_resource_id_functions" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id_functions', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
                         done()
                     })
             })
         })
         describe('For functions web services', () => {
             it('Builds URL from resource', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: "/web/foo_path", "urlParams": { "resource_id": "foo_resource_id_functions" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/web/foo_path', resourceID: 'foo_resource_id_functions', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
                         done()
                     })
             })
         })
         describe('For functions system services', () => {
             it('Builds URL from resource', (done) => {
-                ibmidService.proxy({ method: "FOO_METHOD", url: `/foo_path`, "urlParams": { "resource_id": "crn:v1:bluemix:public:functions:us-south:a/f9aa503dffc94e4cec4f8f104a39ec72:whisk.system::" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'crn:v1:bluemix:public:functions:us-south:a/f9aa503dffc94e4cec4f8f104a39ec72:whisk.system::', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
                         done()
                     })
             })
@@ -394,30 +394,30 @@ describe('IBMid service', () => {
         describe('For global services', () => {
             describe('When listing endpoints', () => {
                 it('Lists endpoints', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: `/endpoints`, "urlParams": { "resource_id": "foo_resource_id_endpoints" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: { 'x-endpoint-id': 'foo:path:to:endpoint' } })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/endpoints', resourceID: 'foo_resource_id_endpoints', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid', headers: { 'x-endpoint-id': 'foo:path:to:endpoint' } })
                         .catch(err => done.fail(err))
                         .then(data => {
-                            expect(data).toEqual({ "body": { foo: { path: { to: { endpoint: 'foo_global_resource_url' } } } }, "headers": {}, "statusCode": 200 })
+                            expect(data).toEqual({ 'body': { foo: { path: { to: { endpoint: 'foo_global_resource_url' } } } }, 'headers': {}, 'statusCode': 200 })
                             done()
                         })
                 })
             })
             describe('When service endpoint is provided', () => {
                 it('Builds URL from endpoints response', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: `/foo_path`, "urlParams": { "resource_id": "foo_resource_id_endpoints" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: { 'x-endpoint-id': 'foo:path:to:endpoint' } })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id_endpoints', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid', headers: { 'x-endpoint-id': 'foo:path:to:endpoint' } })
                         .catch(err => done.fail(err))
                         .then(data => {
-                            expect(data).toEqual({ "body": { "foo": "data" }, "headers": { "foo": "headers" }, "statusCode": 200 })
+                            expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
                             done()
                         })
                 })
             })
             describe('When no service endpoint is provided', () => {
                 it('Returns RC 400', (done) => {
-                    ibmidService.proxy({ method: "FOO_METHOD", url: `/foo_path`, "urlParams": { "resource_id": "foo_resource_id_endpoints" }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' }, headers: {} })
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id_endpoints', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                         .catch(err => done.fail(err))
                         .then(data => {
-                            expect(data).toEqual({ "body": { "message": "Resource not found" }, "headers": {}, "statusCode": 404 })
+                            expect(data).toEqual({ 'body': { 'message': 'Resource not found' }, 'headers': {}, 'statusCode': 404 })
                             done()
                         })
                 })
@@ -427,16 +427,16 @@ describe('IBMid service', () => {
     describe('#listResources', () => {
         describe('When a query for resource type is passed', () => {
             it('Lists resources of that type', (done) => {
-                ibmidService.listResources({ url: "", "params": { q: 'foo_catalog_name_1' }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' } })
+                ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid', resourceType: 'foo_catalog_name_1' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            "statusCode": 200,
-                            "headers": {},
-                            "body": {
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': {
                                 next_url: null,
                                 rows_count: 4,
-                                resources: ["foo_resource_1", "foo_resource_2", "foo_resource_3", "foo_resource_4"]
+                                resources: ['foo_resource_1', 'foo_resource_2', 'foo_resource_3', 'foo_resource_4']
                             },
                         })
                         done()
@@ -444,15 +444,15 @@ describe('IBMid service', () => {
             })
         })
         describe('When no catalog entry is found for query', () => {
-            it('Lists resources of that type', (done) => {
-                ibmidService.listResources({ url: "", "params": { q: 'foo_catalog_name_4' }, "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' } })
+            it('Returns RC 404', (done) => {
+                ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' , resourceType: 'foo_catalog_name_4'})
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            "statusCode": 404,
-                            "headers": {},
-                            "body": {
-                                "message": "Resource not found"
+                            'statusCode': 404,
+                            'headers': {},
+                            'body': {
+                                'message': 'Resource not found'
                             },
                         })
                         done()
@@ -461,16 +461,16 @@ describe('IBMid service', () => {
         })
         describe('When no query for resource type is passed', () => {
             it('Lists all resources', (done) => {
-                ibmidService.listResources({ url: "", "cookies": { "token": 'foo_token', "refresh_token": 'foo_refresh_token', "account_id": 'foo_account_guid' } })
+                ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            "statusCode": 200,
-                            "headers": {},
-                            "body": {
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': {
                                 next_url: null,
                                 rows_count: 4,
-                                resources: ["foo_resource_1", "foo_resource_2", "foo_resource_3", "foo_resource_4"]
+                                resources: ['foo_resource_1', 'foo_resource_2', 'foo_resource_3', 'foo_resource_4']
                             },
                         })
                         done()

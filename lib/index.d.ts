@@ -1,15 +1,3 @@
-import { AxiosStatic } from "axios"
-
-interface Request {
-    url?: string,
-    urlParams?: { [key: string]: any },
-    headers?: { [key: string]: any },
-    cookies?: { [key: string]: any },
-    data?: any,
-    params?: { [key: string]: any },
-    method?: string
-}
-
 interface Response {
     statusCode: number,
     headers?: { [key: string]: any },
@@ -22,23 +10,23 @@ declare class IBMidService {
 
     constructor()
 
-    getPasscode(options: Request): Promise<Response>
-    
-    login(options: Request): Promise<Response>
-    
-    logout(options: Request): Promise<Response>
-    
-    switchAccount(options: Request): Promise<Response>
-    
-    getOwnUser(options: Request): Promise<Response>
-    
-    listAccounts(options: Request): Promise<Response>
+    getPasscode(): Promise<Response>
 
-    listResources(options: Request): Promise<Response>
-    
-    manageResource(options: Request): Promise<Response>
-    
-    proxy(options: Request): Promise<Response>
+    login(options: { apikey: string, passcode: string }): Promise<Response>
+
+    logout(): Promise<Response>
+
+    switchAccount(options: { refreshToken: string, accountID: string }): Promise<Response>
+
+    getOwnUser(options: { token: string }): Promise<Response>
+
+    listAccounts(options: { token: string }): Promise<Response>
+
+    listResources(options: { token: string, resourceType: string }): Promise<Response>
+
+    manageResource(options: { token: string, resourceID: string, url: string, method: string, body: any }): Promise<Response>
+
+    proxy(options: { token: string, resourceID: string, url: string, method: string, headers: any, data: any }): Promise<Response>
 
 }
 
