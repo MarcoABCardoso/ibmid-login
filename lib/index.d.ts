@@ -1,4 +1,4 @@
-import { Router } from "express"
+import { Router, Handler } from "express"
 
 interface Response {
     statusCode: number,

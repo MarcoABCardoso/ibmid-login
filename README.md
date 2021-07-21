@@ -27,9 +27,9 @@ npm install ibmid-login
 As a standalone module: (see JSDoc for required parameters for each method)
 
 ```js
-const IBMidLogin = require('ibmid-login')
+const { default: IBMidLogin } = require('ibmid-login')
 
-const ibmidLogin = IBMidLogin.default // or new IBMidLogin()
+const ibmidLogin = new IBMidLogin()
 await ibmidLogin.getPasscode() // => { headers: { location: "https://identity-1.us-south.iam.cloud.ibm.com/identity/passcode" }, statusCode: 302, body: {} }
 ```
 
