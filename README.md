@@ -24,57 +24,40 @@ npm install ibmid-login
 
 ## Usage
 
-All methods receive and return data for HTTP requests:
+As a standalone module: (see JSDoc for required parameters for each method)
 
-```ts
-interface Request {
-    headers?: { [key: string]: any }, // Request headers
-    cookies?: { [key: string]: any }, // Request cookies
-    data?: any,                       // Request body (JSON)
-    params?: { [key: string]: any },  // Request query parameters
-}
+```js
+const IBMidLogin = require('ibmid-login')
 
-interface Response {
-    statusCode: number,               // Status to be returned to the client
-    headers?: { [key: string]: any }, // Headers to be returned to the client
-    body?: any                        // JSON body to be returned to the client
-}
+const ibmidLogin = IBMidLogin.default // or new IBMidLogin()
+await ibmidLogin.getPasscode() // => { headers: { location: "https://identity-1.us-south.iam.cloud.ibm.com/identity/passcode" }, statusCode: 302, body: {} }
 ```
-The application is expected to obtain these parameters from the request, and provide the response according to the web framework used (if any).
 
-The package provides the following methods:
+As an Express.js Router:
 
-- `getPasscode(options: Request): Promise<Response>`
+```js
+const express = require('express')
+const app = express()
 
-Open a new tab to this endpoint to generate a passcode the end user can log in with;
-
-- `login(options: Request): Promise<Response>`
-
-Send `{ passcode: "<PASSCODE FROM IBM CLOUD>" }` to this endpoint to log in. The current user will be stored as a cookie;
-
-- `logout(options: Request): Promise<Response>`
-
-Requesting this endpoint will erase the session's cookies;
-
-- `switchAccount(options: Request): Promise<Response>`
-
-Send `?account_id=<NEW_ACCOUNT_ID>` to this endpoint to switch to another account. Use the method below to view available accounts;
-
-- `listAccounts(options: Request): Promise<Response>`
-
-Lists accounts the current user has access to;
-
-- `getOwnUser(options: Request): Promise<Response>`
-
-Get current user details. Will also check the token for validity (with IAM RSA keys);
-
-- `manageResource(options: Request): Promise<Response>`
-
-Sends requests to the Resource Controller API;
-
-- `proxy(options: Request): Promise<Response>`
-
-Passes requests onto services in the IBM Cloud;
+/**
+ * GET /ibmid/passcode --> Generates an IBM Cloud one-time passcode when opened in a browser
+ * POST /ibmid/login --> Send { passcode: "<PASSCODE FROM IBM CLOUD>" } to start a session (cookies)
+ * POST /ibmid/logout --> Clears session (cookies)
+ * GET /ibmid/users/me --> Returns current user
+ * GET /ibmid/accounts --> Returns current user's accounts
+ * GET /ibmid/accounts --> Returns current user's accounts
+ * POST /ibmid/accounts --> Send ?account_id=<NEW_ACCOUNT_ID> to switch accounts
+ * POST /ibmid/resources --> Lists resource instances
+ * ALL /ibmid/resources/:resource_id --> Resource controller API for a resource - https://cloud.ibm.com/apidocs/resource-controller/resource-controller
+ * ALL /ibmid/resources/:resource_id/<path> --> Proxy requests to the service URL.
+ * e.g. If resource_id is a Watson Assistant instance, /ibmid/resources/:resource_id/v1/workspaces will proxy to the instance's /v1/workspaces endpoint.
+ */
+app.use('/ibmid', services.ibmid.expressAdapter)
+/**
+ * Authenticates all routes under /protected, redirects to /login
+ */
+app.use('/protected', services.ibmid.expressAdapter.authenticate({ fallback_url: '/login' }))
+```
 
 ## Run tests
 

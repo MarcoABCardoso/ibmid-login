@@ -1,8 +1,8 @@
 process.env.ALLOWED_ACCOUNTS = '["foo_invalid_account_guid","foo_account_guid","foo_new_account_guid"]'
 
+const { default: IBMidService } = require('../lib')
 const GlobalCatalogAPI = require('../lib/internal/global-catalog-api')
 const ResourceControllerAPI = require('../lib/internal/resource-controller-api')
-const IBMidService = require('../lib/ibmid-service')
 const AccountsAPI = require('../lib/internal/accounts-api')
 const IAMAPI = require('../lib/internal/iam-api')
 const { notLoggedInResponse } = require('../lib/responses')
@@ -445,7 +445,7 @@ describe('IBMid service', () => {
         })
         describe('When no catalog entry is found for query', () => {
             it('Returns RC 404', (done) => {
-                ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' , resourceType: 'foo_catalog_name_4'})
+                ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid', resourceType: 'foo_catalog_name_4' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({

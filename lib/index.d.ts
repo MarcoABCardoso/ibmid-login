@@ -1,12 +1,20 @@
+import { Router } from "express"
+
 interface Response {
     statusCode: number,
     headers?: { [key: string]: any },
     body?: any
 }
 
+interface ExpressAdapter extends Router {
+    authenticate: ({ fallback_url: string }) => Handler
+}
+
 declare class IBMidService {
 
     static default: IBMidService
+
+    expressAdapter: ExpressAdapter
 
     constructor()
 
@@ -24,9 +32,9 @@ declare class IBMidService {
 
     listResources(options: { token: string, resourceType: string }): Promise<Response>
 
-    manageResource(options: { token: string, resourceID: string, url: string, method: string, body: any }): Promise<Response>
+    manageResource(options: { token: string, resourceID: string, url: string, method?: string, params?: any, data?: any }): Promise<Response>
 
-    proxy(options: { token: string, resourceID: string, url: string, method: string, headers: any, data: any }): Promise<Response>
+    proxy(options: { token: string, resourceID: string, url: string, method?: string, headers?: any, params?: any, data?: any }): Promise<Response>
 
 }
 

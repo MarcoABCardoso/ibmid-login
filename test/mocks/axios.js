@@ -92,7 +92,7 @@ const defaultResponseMap = {
 
 const mockAxios = (responseMap) => options => {
     let route = { ...defaultResponseMap, ...responseMap }[options.url]
-    if (!route) console.log(options)
+    // if (!route) console.log(options)
     let response = route(options)
     return response
 }
