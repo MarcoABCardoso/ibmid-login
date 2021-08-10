@@ -40,16 +40,16 @@ const express = require('express')
 const app = express()
 
 /**
- * GET /ibmid/passcode --> Generates an IBM Cloud one-time passcode when opened in a browser
+ * GET  /ibmid/passcode --> Generates an IBM Cloud one-time passcode when opened in a browser
  * POST /ibmid/login --> Send { passcode: "<PASSCODE FROM IBM CLOUD>" } to start a session (cookies)
  * POST /ibmid/logout --> Clears session (cookies)
- * GET /ibmid/users/me --> Returns current user
- * GET /ibmid/accounts --> Returns current user's accounts
- * GET /ibmid/accounts --> Returns current user's accounts
- * POST /ibmid/accounts --> Send ?account_id=<NEW_ACCOUNT_ID> to switch accounts
- * POST /ibmid/resources --> Lists resource instances
- * ALL /ibmid/resources/:resource_id --> Resource controller API for a resource - https://cloud.ibm.com/apidocs/resource-controller/resource-controller
- * ALL /ibmid/resources/:resource_id/<path> --> Proxy requests to the service URL.
+ * GET  /ibmid/users/me --> Returns current user
+ * GET  /ibmid/accounts --> Returns current user's accounts
+ * GET  /ibmid/accounts --> Returns current user's accounts
+ * GET  /ibmid/accounts/switch --> Send ?account_id=<NEW_ACCOUNT_ID> to switch accounts
+ * GET  /ibmid/resources --> Lists resource instances
+ * ALL  /ibmid/resources/:resource_id --> Resource controller API for a resource - https://cloud.ibm.com/apidocs/resource-controller/resource-controller
+ * ALL  /ibmid/resources/:resource_id/<path> --> Proxy requests to the service URL.
  * e.g. If resource_id is a Watson Assistant instance, /ibmid/resources/:resource_id/v1/workspaces will proxy to the instance's /v1/workspaces endpoint.
  */
 app.use('/ibmid', services.ibmid.expressAdapter)

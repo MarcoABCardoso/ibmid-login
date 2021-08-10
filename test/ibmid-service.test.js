@@ -320,6 +320,20 @@ describe('IBMid service', () => {
                         })
                 })
             })
+            describe('When the service has no keys, but is an STT instance', () => {
+                it('Forwards the request to the service URL', (done) => {
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_endpoint', resourceID: 'foo_resource_id_no_keys_speech-to-text', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                        .catch(err => done.fail(err))
+                        .then(data => {
+                            expect(data).toEqual({
+                                'statusCode': 200,
+                                'headers': { 'foo': 'headers' },
+                                'body': { 'foo': 'data' },
+                            })
+                            done()
+                        })
+                })
+            })
             describe('When service request fails', () => {
                 it('Forwards the error response', (done) => {
                     ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path_error', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })

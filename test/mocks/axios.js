@@ -24,6 +24,7 @@ let resourceSuccessResponse = { status: 200, data: { id: 'foo_resource_id', guid
 let resourceFailureResponse = { response: { status: 500, data: { foo: 'error' }, headers: { foo: 'error-headers' } } }
 let resourceNoKeysSuccessResponse = { status: 200, data: { id: 'foo_resource_id_no_keys', guid: 'foo_resource_guid_no_keys' } }
 let resourceNoKeysConversationSuccessResponse = { status: 200, data: { id: 'foo_resource_id_no_keys_conversation', guid: 'foo_resource_guid_no_keys_conversation', region_id: 'foo-region' } }
+let resourceNoKeysSTTSuccessResponse = { status: 200, data: { id: 'foo_resource_id_no_keys_speech-to-text', guid: 'foo_resource_guid_no_keys_speech-to-text', region_id: 'foo-region' } }
 let resourceMissingSuccessResponse = { status: 200, data: { status_code: 404 } }
 let functionsResourceSuccessResponse = { status: 200, data: { guid: '_:foo_resource_guid::', resource_id: 'functions', region_id: 'foo-region' } }
 let dashboardsResourceSuccessResponse = { status: 200, data: { id: 'foo_resource_id_dashboards', guid: 'foo_resource_guid_dashboards' } }
@@ -68,6 +69,7 @@ const defaultResponseMap = {
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_error`]: jest.fn(() => Promise.reject(resourceFailureResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys`]: jest.fn(() => Promise.resolve(resourceNoKeysSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_conversation`]: jest.fn(() => Promise.resolve(resourceNoKeysConversationSuccessResponse)),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_speech-to-text`]: jest.fn(() => Promise.resolve(resourceNoKeysSTTSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_missing`]: jest.fn(() => Promise.resolve(resourceMissingSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_functions`]: jest.fn(() => Promise.resolve(functionsResourceSuccessResponse)),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards`]: jest.fn(() => Promise.resolve(dashboardsResourceSuccessResponse)),
@@ -86,6 +88,7 @@ const defaultResponseMap = {
     'foo_endpoints_url/endpoints': jest.fn(() => Promise.resolve(endpointsSuccessResponse)),
     'https://foo_global_resource_url/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
     'https://api.foo-region.assistant.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_conversation/foo_endpoint': jest.fn(() => Promise.resolve(proxySuccessResponse)),
+    'https://api.foo-region.speech-to-text.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_speech-to-text/foo_endpoint': jest.fn(() => Promise.resolve(proxySuccessResponse)),
     'https://api.dataplatform.cloud.ibm.com/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
 
 }
