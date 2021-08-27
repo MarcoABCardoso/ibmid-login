@@ -59,6 +59,13 @@ app.use('/ibmid', services.ibmid.expressAdapter)
 app.use('/protected', services.ibmid.expressAdapter.authenticate({ fallback_url: '/login' }))
 ```
 
+## Customization
+The following options may be used to tune the behavior of this package:
+
+- **ALLOWED_ACCOUNTS**: Array of account IDs that may be used to authenticate. Users with no access to any allowed accounts will get RC 401 for their requests.
+- **ALLOWED_USERS**: Array of user emails that may be used to authenticate. Accepts regular expressions (for example, for domain allowlisting). Users whose emails do not match any of the expressions will get RC 401 for their requests.
+- **IBMID_APIKEY**: API key to delegate requests to a different user when passing requests along to IBM APIs.
+
 ## Run tests
 
 ```sh

@@ -40,8 +40,8 @@ let proxySuccessResponse = { status: 200, data: { foo: 'data' }, headers: { foo:
 let proxyFailureResponse = { response: { status: 500, data: { foo: 'error' }, headers: { foo: 'error-headers' } } }
 
 
-const defaultResponseMap = {
-    [`${IAM_URL}/identity/.well-known/openid-configuration`]: jest.fn(() => Promise.resolve(openIdConfigSuccessResponse)),
+const responseMap = {
+    [`${IAM_URL}/identity/.well-known/openid-configuration`]: () => Promise.resolve(openIdConfigSuccessResponse),
     [`${IAM_URL}/identity/token`]: jest.fn(x =>
         x.params.passcode ?
             x.params.passcode.includes('invalid') ?
@@ -51,7 +51,9 @@ const defaultResponseMap = {
                 (x.params.refresh_token.includes('invalid') || (x.params.account && x.params.account.includes('invalid')) || x.params.refresh_token == 'not_supported') ?
                     Promise.reject(tokenRefreshFailureResponse) :
                     Promise.resolve(tokenRefreshSuccessResponse(x.params.account)) :
-                Promise.resolve(tokenApikeySuccessResponse(x.params.apikey))
+                x.params.apikey.includes('invalid') ?
+                    Promise.reject(tokenPasscodeFailureResponse) :
+                    Promise.resolve(tokenApikeySuccessResponse(x.params.apikey))
 
     ),
     [`${ACCOUNTS_URL}/v1/accounts`]: jest.fn(
@@ -61,42 +63,42 @@ const defaultResponseMap = {
                 Promise.resolve(accountsNotAllowedSuccessResponse) :
                 Promise.resolve(accountsSuccessResponse)
     ),
-    [`${GLOBAL_CATALOG_URL}/api/v1`]: jest.fn(() => Promise.resolve(catalogSuccessResponse)),
+    [`${GLOBAL_CATALOG_URL}/api/v1`]: () => Promise.resolve(catalogSuccessResponse),
 
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances`]: jest.fn(() => Promise.resolve(resourceListSuccessResponsePaged)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances?next_docid=foo_docid`]: jest.fn(() => Promise.resolve(resourceListSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id`]: jest.fn(() => Promise.resolve(resourceSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_error`]: jest.fn(() => Promise.reject(resourceFailureResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys`]: jest.fn(() => Promise.resolve(resourceNoKeysSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_conversation`]: jest.fn(() => Promise.resolve(resourceNoKeysConversationSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_speech-to-text`]: jest.fn(() => Promise.resolve(resourceNoKeysSTTSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_missing`]: jest.fn(() => Promise.resolve(resourceMissingSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_functions`]: jest.fn(() => Promise.resolve(functionsResourceSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards`]: jest.fn(() => Promise.resolve(dashboardsResourceSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_endpoints`]: jest.fn(() => Promise.resolve(endpointsResourceSuccessResponse)),
-    'foo_service_url/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'foo_service_url/foo_path_error': jest.fn(() => Promise.reject(proxyFailureResponse)),
-    'foo_service_url/daas/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'https://foo-region.functions.cloud.ibm.com/api/v1/namespaces/foo_resource_guid/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'https://foo-region.functions.cloud.ibm.com/api/v1/web/foo_resource_guid/foo_path/web/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'https://us-south.functions.cloud.ibm.com/api/v1/namespaces/whisk.system/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id/resource_keys`]: jest.fn(() => Promise.resolve(keysSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys/resource_keys`]: jest.fn(() => Promise.resolve(noKeysSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards/resource_keys`]: jest.fn(() => Promise.resolve(dashboardKeysSuccessResponse)),
-    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_endpoints/resource_keys`]: jest.fn(() => Promise.resolve(endpointsKeysSuccessResponse)),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances`]: () => Promise.resolve(resourceListSuccessResponsePaged),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances?next_docid=foo_docid`]: () => Promise.resolve(resourceListSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id`]: () => Promise.resolve(resourceSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_error`]: () => Promise.reject(resourceFailureResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys`]: () => Promise.resolve(resourceNoKeysSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_conversation`]: () => Promise.resolve(resourceNoKeysConversationSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_speech-to-text`]: () => Promise.resolve(resourceNoKeysSTTSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_missing`]: () => Promise.resolve(resourceMissingSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_functions`]: () => Promise.resolve(functionsResourceSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards`]: () => Promise.resolve(dashboardsResourceSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_endpoints`]: () => Promise.resolve(endpointsResourceSuccessResponse),
+    'foo_service_url/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'foo_service_url/foo_path_error': () => Promise.reject(proxyFailureResponse),
+    'foo_service_url/daas/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://foo-region.functions.cloud.ibm.com/api/v1/namespaces/foo_resource_guid/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://foo-region.functions.cloud.ibm.com/api/v1/web/foo_resource_guid/foo_path/web/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://us-south.functions.cloud.ibm.com/api/v1/namespaces/whisk.system/foo_path': () => Promise.resolve(proxySuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id/resource_keys`]: () => Promise.resolve(keysSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys/resource_keys`]: () => Promise.resolve(noKeysSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards/resource_keys`]: () => Promise.resolve(dashboardKeysSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_endpoints/resource_keys`]: () => Promise.resolve(endpointsKeysSuccessResponse),
 
-    'foo_endpoints_url/endpoints': jest.fn(() => Promise.resolve(endpointsSuccessResponse)),
-    'https://foo_global_resource_url/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'https://api.foo-region.assistant.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_conversation/foo_endpoint': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'https://api.foo-region.speech-to-text.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_speech-to-text/foo_endpoint': jest.fn(() => Promise.resolve(proxySuccessResponse)),
-    'https://api.dataplatform.cloud.ibm.com/foo_path': jest.fn(() => Promise.resolve(proxySuccessResponse)),
+    'foo_endpoints_url/endpoints': () => Promise.resolve(endpointsSuccessResponse),
+    'https://foo_global_resource_url/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://api.foo-region.assistant.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_conversation/foo_endpoint': () => Promise.resolve(proxySuccessResponse),
+    'https://api.foo-region.speech-to-text.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_speech-to-text/foo_endpoint': () => Promise.resolve(proxySuccessResponse),
+    'https://api.dataplatform.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
 
 }
 
-const mockAxios = (responseMap) => options => {
-    let route = { ...defaultResponseMap, ...responseMap }[options.url]
+const mockAxios = jest.fn(options => {
+    let route = responseMap[options.url]
     // if (!route) console.log(options)
     let response = route(options)
     return response
-}
+})
 module.exports = mockAxios

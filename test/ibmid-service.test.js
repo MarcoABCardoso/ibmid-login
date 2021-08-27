@@ -1,4 +1,3 @@
-process.env.ALLOWED_ACCOUNTS = '["foo_invalid_account_guid","foo_account_guid","foo_new_account_guid"]'
 
 const { default: IBMidService } = require('../lib')
 const GlobalCatalogAPI = require('../lib/internal/global-catalog-api')
@@ -8,14 +7,20 @@ const IAMAPI = require('../lib/internal/iam-api')
 const { notLoggedInResponse } = require('../lib/responses')
 const mockAxios = require('./mocks/axios')
 const mockJwksClient = require('./mocks/jwksClient')
+const jwt = require('jsonwebtoken')
+
+let iamApi = new IAMAPI(mockAxios, mockJwksClient)
+let accountsApi = new AccountsAPI(mockAxios)
+let globalCatalogApi = new GlobalCatalogAPI(mockAxios)
+let resourceControllerApi = new ResourceControllerAPI(mockAxios)
 
 let ibmidService = IBMidService.default
 beforeEach(() => {
-    let iamApi = new IAMAPI(mockAxios(), mockJwksClient)
-    let accountsApi = new AccountsAPI(mockAxios())
-    let globalCatalogApi = new GlobalCatalogAPI(mockAxios())
-    let resourceControllerApi = new ResourceControllerAPI(mockAxios())
-    ibmidService = new IBMidService(mockAxios(), iamApi, accountsApi, globalCatalogApi, resourceControllerApi)
+    jest.clearAllMocks()
+    ibmidService = new IBMidService({
+        ALLOWED_ACCOUNTS: ['foo_invalid_account_guid', 'foo_account_guid', 'foo_new_account_guid'],
+        ALLOWED_USERS: ['.*@allowed_domain.com$', '.*@other_allowed_domain.com$']
+    }, mockAxios, iamApi, accountsApi, globalCatalogApi, resourceControllerApi)
 })
 
 describe('IBMid service', () => {
@@ -201,14 +206,35 @@ describe('IBMid service', () => {
     describe('#getOwnUser', () => {
         describe('When token is valid', () => {
             it('Returns the user with their accounts', (done) => {
-                ibmidService.getOwnUser({ token: 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIn0.XQQN371DyErrJ8kTK7w-rTX94m4v3jfHS0Z98ttALj6xD2jBu0WZ91ID53K6tZlVs4DgPtEw2Tykjd0yZszUqARZxJu4zOVauCsoQyjfx-ZIpCG9v7im_EZ06YNaiGgsREgxr3qsA-MkUY-5dQcl8OIkwKtnQWjwIXHptQwxfJ4', refreshToken: 'foo_refresh_token' })
+                ibmidService.getOwnUser({ token: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_account_guid' } }, mockJwksClient.privateKey, { algorithm: 'RS512' }), refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
+                        delete data.body.iat
                         expect(data).toEqual({
                             'statusCode': 200,
                             'headers': {},
-                            'body': { 'foo_user_field': 'foo_user_value' },
+                            'body': { 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_account_guid' } },
                         })
+                        done()
+                    })
+            })
+        })
+        describe('When token is not from an allowed account', () => {
+            it('Returns RC 401', (done) => {
+                ibmidService.getOwnUser({ token: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_unallowed_account_guid' } }, mockJwksClient.privateKey, { algorithm: 'RS512' }), refreshToken: 'foo_refresh_token' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual(notLoggedInResponse())
+                        done()
+                    })
+            })
+        })
+        describe('When token is not from an allowed user', () => {
+            it('Returns RC 401', (done) => {
+                ibmidService.getOwnUser({ token: jwt.sign({ 'email': 'foo_user_email@dangerous_domain.com', 'account': { 'bss': 'foo_account_guid' } }, mockJwksClient.privateKey, { algorithm: 'RS512' }), refreshToken: 'foo_refresh_token' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual(notLoggedInResponse())
                         done()
                     })
             })
@@ -255,6 +281,7 @@ describe('IBMid service', () => {
             ibmidService.manageResource({ method: 'FOO_METHOD', url: '', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                 .catch(err => done.fail(err))
                 .then(data => {
+                    expect(mockAxios.mock.calls[0][0].headers.Authorization).toBe('Bearer foo_token')
                     expect(data).toEqual({
                         'statusCode': 200,
                         'headers': {},
@@ -262,6 +289,38 @@ describe('IBMid service', () => {
                     })
                     done()
                 })
+        })
+        describe('When IBM_APIKEY is passed', () => {
+            it('Overrides the token passed onto the API', (done) => {
+                ibmidService = new IBMidService({ IBMID_APIKEY: 'foo_apikey' }, mockAxios, iamApi, accountsApi, globalCatalogApi, resourceControllerApi)
+                ibmidService.manageResource({ method: 'FOO_METHOD', url: '', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(mockAxios.mock.calls[1][0].headers.Authorization).toBe('Bearer foo_token_for_apikey_foo_apikey')
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': { 'id': 'foo_resource_id', 'guid': 'foo_resource_guid' },
+                        })
+                        done()
+                    })
+            })
+        })
+        describe('When IBM_APIKEY is passed, but is invalid', () => {
+            it('Does not override the token passed onto the API, and just uses the normal one', (done) => {
+                ibmidService = new IBMidService({ IBMID_APIKEY: 'foo_apikey_invalid' }, mockAxios, iamApi, accountsApi, globalCatalogApi, resourceControllerApi)
+                ibmidService.manageResource({ method: 'FOO_METHOD', url: '', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(mockAxios.mock.calls[1][0].headers.Authorization).toBe('Bearer foo_token')
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': { 'id': 'foo_resource_id', 'guid': 'foo_resource_guid' },
+                        })
+                        done()
+                    })
+            })
         })
         describe('When the service management fails', () => {
             it('Forwards the error response', (done) => {
@@ -284,6 +343,7 @@ describe('IBMid service', () => {
                 ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
+                        expect(mockAxios.mock.calls[1][0].headers.Authorization).toBe('Bearer foo_token')
                         expect(data).toEqual({
                             'statusCode': 200,
                             'headers': { 'foo': 'headers' },
@@ -291,6 +351,22 @@ describe('IBMid service', () => {
                         })
                         done()
                     })
+            })
+            describe('When IBM_APIKEY is passed', () => {
+                it('Overrides the token passed onto the API', (done) => {
+                    ibmidService = new IBMidService({ IBMID_APIKEY: 'foo_apikey' }, mockAxios, iamApi, accountsApi, globalCatalogApi, resourceControllerApi)
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                        .catch(err => done.fail(err))
+                        .then(data => {
+                            expect(mockAxios.mock.calls[1][0].headers.Authorization).toBe('Bearer foo_token_for_apikey_foo_apikey')
+                            expect(data).toEqual({
+                                'statusCode': 200,
+                                'headers': { 'foo': 'headers' },
+                                'body': { 'foo': 'data' },
+                            })
+                            done()
+                        })
+                })
             })
             describe('When the service has no keys', () => {
                 it('Returns RC 404', (done) => {
@@ -478,6 +554,27 @@ describe('IBMid service', () => {
                 ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
+                        expect(mockAxios.mock.calls[1][0].headers.Authorization).toBe('Bearer foo_token')
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': {
+                                next_url: null,
+                                rows_count: 4,
+                                resources: ['foo_resource_1', 'foo_resource_2', 'foo_resource_3', 'foo_resource_4']
+                            },
+                        })
+                        done()
+                    })
+            })
+        })
+        describe('When IBM_APIKEY is passed', () => {
+            it('Overrides the token passed onto the API', (done) => {
+                ibmidService = new IBMidService({ IBMID_APIKEY: 'foo_apikey' }, mockAxios, iamApi, accountsApi, globalCatalogApi, resourceControllerApi)
+                ibmidService.listResources({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(mockAxios.mock.calls[1][0].headers.Authorization).toBe('Bearer foo_token_for_apikey_foo_apikey')
                         expect(data).toEqual({
                             'statusCode': 200,
                             'headers': {},
