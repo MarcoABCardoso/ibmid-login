@@ -1,9 +1,10 @@
 const { ACCOUNTS_URL, IAM_URL, RESOURCE_CONTROLLER_URL, GLOBAL_CATALOG_URL } = require('../../lib/config/constants')
+const { validToken, noAccountsToken, noAccessToken } = require('../tokens')
 
 let openIdConfigSuccessResponse = { status: 200, data: { passcode_endpoint: 'foo_host/identity/passcode' } }
-let tokenPasscodeSuccessResponse = passcode => ({ status: 200, data: { access_token: `foo_token_for_passcode_${passcode}`, refresh_token: `foo_token_for_passcode_${passcode}`, expires_in: 1337 } })
+let tokenPasscodeSuccessResponse = passcode => ({ status: 200, data: { access_token: passcode.includes('not_allowed') ? noAccessToken : passcode.includes('no_accounts') ? noAccountsToken : validToken, refresh_token: `foo_refresh_token_for_passcode_${passcode}`, expires_in: 1337 } })
 let tokenPasscodeFailureResponse = { response: { status: 400, data: { errorMessage: 'Provided passcode is invalid' } } }
-let tokenRefreshSuccessResponse = account => ({ status: 200, data: { access_token: `foo_refreshed_token_for_account_${account}`, refresh_token: `foo_refresh_token_for_account_${account}`, expires_in: 1337 } })
+let tokenRefreshSuccessResponse = (account, refreshToken) => ({ status: 200, data: { access_token: refreshToken.includes('no_accounts') ? noAccountsToken : validToken, refresh_token: `foo_refresh_token_for_account_${account}`, expires_in: 1337 } })
 let tokenRefreshFailureResponse = { response: { status: 400, data: { errorMessage: 'Provided refresh_token is invalid' } } }
 let tokenApikeySuccessResponse = apikey => ({ status: 200, data: { access_token: `foo_token_for_apikey_${apikey}`, refresh_token: 'not_supported', expires_in: 1337 } })
 let accountsSuccessResponse = { status: 200, data: { resources: [{ metadata: { guid: 'foo_invalid_account_guid' } }, { metadata: { guid: 'foo_account_guid' } }, { metadata: { guid: 'foo_new_account_guid' } }] } }
@@ -50,7 +51,7 @@ const responseMap = {
             x.params.refresh_token ?
                 (x.params.refresh_token.includes('invalid') || (x.params.account && x.params.account.includes('invalid')) || x.params.refresh_token == 'not_supported') ?
                     Promise.reject(tokenRefreshFailureResponse) :
-                    Promise.resolve(tokenRefreshSuccessResponse(x.params.account)) :
+                    Promise.resolve(tokenRefreshSuccessResponse(x.params.account, x.params.refresh_token)) :
                 x.params.apikey.includes('invalid') ?
                     Promise.reject(tokenPasscodeFailureResponse) :
                     Promise.resolve(tokenApikeySuccessResponse(x.params.apikey))
@@ -59,7 +60,7 @@ const responseMap = {
     [`${ACCOUNTS_URL}/v1/accounts`]: jest.fn(
         x => x.headers.Authorization.includes('failure') ?
             Promise.reject(accountsFailureResponse) :
-            x.headers.Authorization.includes('not_allowed') ?
+            x.headers.Authorization === `Bearer ${noAccountsToken}` ?
                 Promise.resolve(accountsNotAllowedSuccessResponse) :
                 Promise.resolve(accountsSuccessResponse)
     ),

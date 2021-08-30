@@ -7,7 +7,7 @@ const IAMAPI = require('../lib/internal/iam-api')
 const { notLoggedInResponse } = require('../lib/responses')
 const mockAxios = require('./mocks/axios')
 const mockJwksClient = require('./mocks/jwksClient')
-const jwt = require('jsonwebtoken')
+const { validToken, noAccessToken, invalidToken, noAccountsToken } = require('./tokens')
 
 let iamApi = new IAMAPI(mockAxios, mockJwksClient)
 let accountsApi = new AccountsAPI(mockAxios)
@@ -51,10 +51,10 @@ describe('IBMid service', () => {
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            'body': { 'success': true, 'token': 'foo_refreshed_token_for_account_foo_account_guid', 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid' },
+                            'body': { 'success': true, 'token': validToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid' },
                             'headers': {
                                 'Set-Cookie': [
-                                    'token=foo_refreshed_token_for_account_foo_account_guid; Max-Age=1337; Path=/; HttpOnly',
+                                    `token=${validToken}; Max-Age=1337; Path=/; HttpOnly`,
                                     'refresh_token=foo_refresh_token_for_account_foo_account_guid; Max-Age=32088; Path=/; HttpOnly',
                                     'account_id=foo_account_guid; Max-Age=32088; Path=/; HttpOnly'
                                 ]
@@ -85,9 +85,19 @@ describe('IBMid service', () => {
                     })
             })
         })
-        describe('When no accounts are allowed', () => {
+        describe('When user is not allowed', () => {
             it('Returns RC 401', (done) => {
                 ibmidService.login({ passcode: 'foo_passcode_not_allowed' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual(notLoggedInResponse())
+                        done()
+                    })
+            })
+        })
+        describe('When no accounts are allowed', () => {
+            it('Returns RC 401', (done) => {
+                ibmidService.login({ passcode: 'foo_passcode_no_accounts' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -130,8 +140,14 @@ describe('IBMid service', () => {
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            'body': { 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_new_account_guid', 'success': true, 'token': 'foo_refreshed_token_for_account_foo_new_account_guid', },
-                            'headers': { 'Set-Cookie': ['token=foo_refreshed_token_for_account_foo_new_account_guid; Max-Age=1337; Path=/; HttpOnly', 'refresh_token=foo_refresh_token_for_account_foo_new_account_guid; Max-Age=32088; Path=/; HttpOnly', 'account_id=foo_new_account_guid; Max-Age=32088; Path=/; HttpOnly'] },
+                            'body': { 'token': validToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_new_account_guid', 'success': true },
+                            'headers': {
+                                'Set-Cookie': [
+                                    `token=${validToken}; Max-Age=1337; Path=/; HttpOnly`,
+                                    'refresh_token=foo_refresh_token_for_account_foo_new_account_guid; Max-Age=32088; Path=/; HttpOnly',
+                                    'account_id=foo_new_account_guid; Max-Age=32088; Path=/; HttpOnly'
+                                ]
+                            },
                             'statusCode': 200,
                         })
                         done()
@@ -144,8 +160,14 @@ describe('IBMid service', () => {
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            'body': { 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid', 'success': true, 'token': 'foo_refreshed_token_for_account_foo_account_guid', },
-                            'headers': { 'Set-Cookie': ['token=foo_refreshed_token_for_account_foo_account_guid; Max-Age=1337; Path=/; HttpOnly', 'refresh_token=foo_refresh_token_for_account_foo_account_guid; Max-Age=32088; Path=/; HttpOnly', 'account_id=foo_account_guid; Max-Age=32088; Path=/; HttpOnly'] },
+                            'body': { 'token': validToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid', 'success': true },
+                            'headers': {
+                                'Set-Cookie': [
+                                    `token=${validToken}; Max-Age=1337; Path=/; HttpOnly`,
+                                    'refresh_token=foo_refresh_token_for_account_foo_account_guid; Max-Age=32088; Path=/; HttpOnly',
+                                    'account_id=foo_account_guid; Max-Age=32088; Path=/; HttpOnly'
+                                ]
+                            },
                             'statusCode': 200,
                         })
                         done()
@@ -154,7 +176,7 @@ describe('IBMid service', () => {
         })
         describe('When user tries to switch to a not allowed account', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.switchAccount({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_not_allowed_account_guid' })
+                ibmidService.switchAccount({ token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_no_accounts_account_guid' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -178,10 +200,10 @@ describe('IBMid service', () => {
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            'body': { 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_new_account_guid', 'success': true, 'token': 'foo_refreshed_token_for_account_foo_new_account_guid', },
+                            'body': { 'token': validToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_new_account_guid', 'success': true },
                             'headers': {
                                 'Set-Cookie': [
-                                    'token=foo_refreshed_token_for_account_foo_new_account_guid; Max-Age=1337; Path=/; HttpOnly',
+                                    `token=${validToken}; Max-Age=1337; Path=/; HttpOnly`,
                                     'refresh_token=foo_refresh_token_for_account_foo_new_account_guid; Max-Age=32088; Path=/; HttpOnly',
                                     'account_id=foo_new_account_guid; Max-Age=32088; Path=/; HttpOnly'
                                 ]
@@ -205,8 +227,8 @@ describe('IBMid service', () => {
     })
     describe('#getOwnUser', () => {
         describe('When token is valid', () => {
-            it('Returns the user with their accounts', (done) => {
-                ibmidService.getOwnUser({ token: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_account_guid' } }, mockJwksClient.privateKey, { algorithm: 'RS512' }), refreshToken: 'foo_refresh_token' })
+            it('Returns the user', (done) => {
+                ibmidService.getOwnUser({ token: validToken, refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         delete data.body.iat
@@ -221,7 +243,7 @@ describe('IBMid service', () => {
         })
         describe('When token is not from an allowed account', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.getOwnUser({ token: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_unallowed_account_guid' } }, mockJwksClient.privateKey, { algorithm: 'RS512' }), refreshToken: 'foo_refresh_token' })
+                ibmidService.getOwnUser({ token: noAccountsToken, refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -231,7 +253,7 @@ describe('IBMid service', () => {
         })
         describe('When token is not from an allowed user', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.getOwnUser({ token: jwt.sign({ 'email': 'foo_user_email@dangerous_domain.com', 'account': { 'bss': 'foo_account_guid' } }, mockJwksClient.privateKey, { algorithm: 'RS512' }), refreshToken: 'foo_refresh_token' })
+                ibmidService.getOwnUser({ token: noAccessToken, refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())
@@ -241,7 +263,7 @@ describe('IBMid service', () => {
         })
         describe('When token is invalid', () => {
             it('Returns RC 401', (done) => {
-                ibmidService.getOwnUser({ token: 'eyJraWQiOiIyMDIwMTEyMTE4MzQiLCJhbGciOiJSUzUxMiJ9.eyJmb29fdXNlcl9maWVsZCI6ImZvb191c2VyX3ZhbHVlIiwiZXhwIjowfQ.H50OWcUkfmMD1jISDHLypRImzlUBEAAJ658GOqvBPo2XUSeoqG1am8XXe18LdsHa6j5m40rpXCXriIwiyai7CqOyJ0iRlGIcfoBozv5GR1eDilQjwQdm7JUMJLBtC57qbJ-iG8qh1ViX0GcqLPGaSTNeLOrpXIV1jS2EdnKHWOA', refreshToken: 'foo_refresh_token' })
+                ibmidService.getOwnUser({ token: invalidToken, refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual(notLoggedInResponse())

@@ -1,6 +1,6 @@
 {
   "name": "ibmid-login",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "Integrates with the IBM Identity and Account Management (IAM) and Accounts APIs to implement login using IBMid.",
   "main": "lib/index.js",
   "dependencies": {
