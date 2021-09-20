@@ -60,7 +60,7 @@ const responseMap = {
     [`${ACCOUNTS_URL}/v1/accounts`]: jest.fn(
         x => x.headers.Authorization.includes('failure') ?
             Promise.reject(accountsFailureResponse) :
-            x.headers.Authorization === `Bearer ${noAccountsToken}` ?
+            x.headers.Authorization === `Bearer ${noAccountsToken}` || x.headers.Authorization === `Bearer ${noAccessToken}` ?
                 Promise.resolve(accountsNotAllowedSuccessResponse) :
                 x.headers.Authorization === `Bearer ${justAccountsToken}` ?
                     Promise.resolve(accountsSuccessResponse) :
