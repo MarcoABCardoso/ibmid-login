@@ -46,7 +46,8 @@ module.exports = {
     privateKey,
     publicKey,
     validToken: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_account_guid' } }, privateKey, { algorithm: 'RS512' }),
-    noAccessToken: jwt.sign({ 'email': 'foo_user_email@dangerous_domain.com', 'account': { 'bss': 'foo_account_guid' } }, privateKey, { algorithm: 'RS512' }),
-    noAccountsToken: jwt.sign({ 'email': 'foo_user_email_no_accounts@allowed_domain.com', 'account': { 'bss': 'foo_forbidden_account_guid' } }, privateKey, { algorithm: 'RS512' }),
+    noAccessToken: jwt.sign({ 'email': 'foo_user_email@dangerous_domain.com', 'account': { 'bss': 'foo_forbidden_account_guid' } }, privateKey, { algorithm: 'RS512' }),
+    noAccountsToken: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_forbidden_account_guid' } }, privateKey, { algorithm: 'RS512' }),
+    justAccountsToken: jwt.sign({ 'email': 'foo_user_email@dangerous_domain.com', 'account': { 'bss': 'foo_account_guid' } }, privateKey, { algorithm: 'RS512' }),
     invalidToken: jwt.sign({ 'email': 'foo_user_email@allowed_domain.com', 'account': { 'bss': 'foo_account_guid' } }, badPrivateKey, { algorithm: 'RS512' }),
 }

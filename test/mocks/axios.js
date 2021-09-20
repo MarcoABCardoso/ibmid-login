@@ -1,10 +1,10 @@
 const { ACCOUNTS_URL, IAM_URL, RESOURCE_CONTROLLER_URL, GLOBAL_CATALOG_URL } = require('../../lib/config/constants')
-const { validToken, noAccountsToken, noAccessToken } = require('../tokens')
+const { validToken, noAccountsToken, noAccessToken, justAccountsToken } = require('../tokens')
 
 let openIdConfigSuccessResponse = { status: 200, data: { passcode_endpoint: 'foo_host/identity/passcode' } }
-let tokenPasscodeSuccessResponse = passcode => ({ status: 200, data: { access_token: passcode.includes('not_allowed') ? noAccessToken : passcode.includes('no_accounts') ? noAccountsToken : validToken, refresh_token: `foo_refresh_token_for_passcode_${passcode}`, expires_in: 1337 } })
+let tokenPasscodeSuccessResponse = passcode => ({ status: 200, data: { access_token: passcode.includes('not_allowed') ? noAccessToken : passcode.includes('no_accounts') ? noAccountsToken : passcode.includes('just_accounts') ? justAccountsToken : validToken, refresh_token: `foo_refresh_token_for_passcode_${passcode}`, expires_in: 1337 } })
 let tokenPasscodeFailureResponse = { response: { status: 400, data: { errorMessage: 'Provided passcode is invalid' } } }
-let tokenRefreshSuccessResponse = (account, refreshToken) => ({ status: 200, data: { access_token: refreshToken.includes('no_accounts') ? noAccountsToken : validToken, refresh_token: `foo_refresh_token_for_account_${account}`, expires_in: 1337 } })
+let tokenRefreshSuccessResponse = (account, refreshToken) => ({ status: 200, data: { access_token: refreshToken.includes('no_accounts') ? noAccountsToken : refreshToken.includes('just_accounts') ? justAccountsToken : validToken, refresh_token: `foo_refresh_token_for_account_${account}`, expires_in: 1337 } })
 let tokenRefreshFailureResponse = { response: { status: 400, data: { errorMessage: 'Provided refresh_token is invalid' } } }
 let tokenApikeySuccessResponse = apikey => ({ status: 200, data: { access_token: `foo_token_for_apikey_${apikey}`, refresh_token: 'not_supported', expires_in: 1337 } })
 let accountsSuccessResponse = { status: 200, data: { resources: [{ metadata: { guid: 'foo_invalid_account_guid' } }, { metadata: { guid: 'foo_account_guid' } }, { metadata: { guid: 'foo_new_account_guid' } }] } }
@@ -62,7 +62,9 @@ const responseMap = {
             Promise.reject(accountsFailureResponse) :
             x.headers.Authorization === `Bearer ${noAccountsToken}` ?
                 Promise.resolve(accountsNotAllowedSuccessResponse) :
-                Promise.resolve(accountsSuccessResponse)
+                x.headers.Authorization === `Bearer ${justAccountsToken}` ?
+                    Promise.resolve(accountsSuccessResponse) :
+                    Promise.resolve(accountsSuccessResponse)
     ),
     [`${GLOBAL_CATALOG_URL}/api/v1`]: () => Promise.resolve(catalogSuccessResponse),
 

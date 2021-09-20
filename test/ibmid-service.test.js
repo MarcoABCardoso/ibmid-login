@@ -7,7 +7,7 @@ const IAMAPI = require('../lib/internal/iam-api')
 const { notLoggedInResponse } = require('../lib/responses')
 const mockAxios = require('./mocks/axios')
 const mockJwksClient = require('./mocks/jwksClient')
-const { validToken, noAccessToken, invalidToken, noAccountsToken } = require('./tokens')
+const { validToken, noAccessToken, invalidToken, noAccountsToken, justAccountsToken } = require('./tokens')
 
 let iamApi = new IAMAPI(mockAxios, mockJwksClient)
 let accountsApi = new AccountsAPI(mockAxios)
@@ -85,38 +85,69 @@ describe('IBMid service', () => {
                     })
             })
         })
-        describe('When user is not allowed', () => {
-            it('Returns RC 401', (done) => {
-                ibmidService.login({ passcode: 'foo_passcode_not_allowed' })
-                    .catch(err => done.fail(err))
-                    .then(data => {
-                        expect(data).toEqual(notLoggedInResponse())
-                        done()
-                    })
-            })
-        })
-        describe('When no accounts are allowed', () => {
+        describe('When no accounts are allowed, but the user is', () => {
             it('Returns RC 401', (done) => {
                 ibmidService.login({ passcode: 'foo_passcode_no_accounts' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual(notLoggedInResponse())
-                        done()
-                    })
-            })
-        })
-        describe('When login fails', () => {
-            it('Returns RC 401', (done) => {
-                ibmidService.login({ passcode: 'foo_passcode_invalid' })
-                    .catch(err => done.fail(err))
-                    .then(data => {
                         expect(data).toEqual({
-                            'body': { 'message': 'Provided passcode is invalid', 'success': false },
-                            'statusCode': 401,
+                            'body': { 'success': true, 'token': noAccountsToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid' },
+                            'headers': {
+                                'Set-Cookie': [
+                                    `token=${noAccountsToken}; Max-Age=1337; Path=/; HttpOnly`,
+                                    'refresh_token=foo_refresh_token_for_account_foo_account_guid; Max-Age=32088; Path=/; HttpOnly',
+                                    'account_id=foo_account_guid; Max-Age=32088; Path=/; HttpOnly'
+                                ]
+                            },
+                            'statusCode': 200,
                         })
                         done()
                     })
+                done()
             })
+        })
+    })
+    describe('When user is allowed, but none of their accounts is', () => {
+        it('Returns RC 401', (done) => {
+            ibmidService.login({ passcode: 'foo_passcode_just_accounts' })
+                .catch(err => done.fail(err))
+                .then(data => {
+                    expect(data).toEqual({
+                        'body': { 'success': true, 'token': justAccountsToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid' },
+                        'headers': {
+                            'Set-Cookie': [
+                                `token=${justAccountsToken}; Max-Age=1337; Path=/; HttpOnly`,
+                                'refresh_token=foo_refresh_token_for_account_foo_account_guid; Max-Age=32088; Path=/; HttpOnly',
+                                'account_id=foo_account_guid; Max-Age=32088; Path=/; HttpOnly'
+                            ]
+                        },
+                        'statusCode': 200,
+                    })
+                    done()
+                })
+        })
+    })
+    describe('When neither the user or one of their accounts is allowed', () => {
+        it('Returns RC 401', (done) => {
+            ibmidService.login({ passcode: 'foo_passcode_not_allowed' })
+                .catch(err => done.fail(err))
+                .then(data => {
+                    expect(data).toEqual(notLoggedInResponse())
+                    done()
+                })
+        })
+    })
+    describe('When login fails', () => {
+        it('Returns RC 401', (done) => {
+            ibmidService.login({ passcode: 'foo_passcode_invalid' })
+                .catch(err => done.fail(err))
+                .then(data => {
+                    expect(data).toEqual({
+                        'body': { 'message': 'Provided passcode is invalid', 'success': false },
+                        'statusCode': 401,
+                    })
+                    done()
+                })
         })
     })
     describe('#logout', () => {
@@ -241,17 +272,54 @@ describe('IBMid service', () => {
                     })
             })
         })
-        describe('When token is not from an allowed account', () => {
-            it('Returns RC 401', (done) => {
-                ibmidService.getOwnUser({ token: noAccountsToken, refreshToken: 'foo_refresh_token' })
+        describe('When token is valid, but ALLOWED_USERS and ALLOWED_ACCOUNTS are both null', () => {
+            it('Returns the user', (done) => {
+                ibmidService.options.ALLOWED_ACCOUNTS = null
+                ibmidService.options.ALLOWED_USERS = null
+                ibmidService.getOwnUser({ token: noAccessToken, refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
                     .then(data => {
-                        expect(data).toEqual(notLoggedInResponse())
+                        delete data.body.iat
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': { 'email': 'foo_user_email@dangerous_domain.com', 'account': { 'bss': 'foo_forbidden_account_guid' } },
+                        })
                         done()
                     })
             })
         })
-        describe('When token is not from an allowed user', () => {
+        describe('When no accounts are allowed, but the user is', () => {
+            it('Returns RC 401', (done) => {
+                ibmidService.getOwnUser({ token: noAccountsToken, refreshToken: 'foo_refresh_token' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        delete data.body.iat
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': { 'account': { 'bss': 'foo_forbidden_account_guid' }, 'email': 'foo_user_email@allowed_domain.com' },
+                        })
+                        done()
+                    })
+            })
+        })
+        describe('When token is not from an allowed user, but the account is allowed', () => {
+            it('Returns RC 401', (done) => {
+                ibmidService.getOwnUser({ token: justAccountsToken, refreshToken: 'foo_refresh_token' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        delete data.body.iat
+                        expect(data).toEqual({
+                            'statusCode': 200,
+                            'headers': {},
+                            'body': { 'account': { 'bss': 'foo_account_guid' }, 'email': 'foo_user_email@dangerous_domain.com' },
+                        })
+                        done()
+                    })
+            })
+        })
+        describe('When token is not allowed', () => {
             it('Returns RC 401', (done) => {
                 ibmidService.getOwnUser({ token: noAccessToken, refreshToken: 'foo_refresh_token' })
                     .catch(err => done.fail(err))
