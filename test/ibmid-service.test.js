@@ -91,19 +91,18 @@ describe('IBMid service', () => {
                     .catch(err => done.fail(err))
                     .then(data => {
                         expect(data).toEqual({
-                            'body': { 'success': true, 'token': noAccountsToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_account_foo_account_guid' },
+                            'body': { 'success': true, 'token': noAccountsToken, 'expires_in': 1337, 'refresh_token': 'foo_refresh_token_for_passcode_foo_passcode_no_accounts' },
                             'headers': {
                                 'Set-Cookie': [
                                     `token=${noAccountsToken}; Max-Age=1337; Path=/; HttpOnly`,
-                                    'refresh_token=foo_refresh_token_for_account_foo_account_guid; Max-Age=32088; Path=/; HttpOnly',
-                                    'account_id=foo_account_guid; Max-Age=32088; Path=/; HttpOnly'
+                                    'refresh_token=foo_refresh_token_for_passcode_foo_passcode_no_accounts; Max-Age=32088; Path=/; HttpOnly',
+                                    'account_id=null; Max-Age=32088; Path=/; HttpOnly'
                                 ]
                             },
                             'statusCode': 200,
                         })
                         done()
                     })
-                done()
             })
         })
     })
