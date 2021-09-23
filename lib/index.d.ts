@@ -1,3 +1,4 @@
+import { AxiosRequestConfig, AxiosResponse } from "axios"
 import { Router, Handler } from "express"
 
 interface Response {
@@ -24,12 +25,12 @@ declare class IBMidService {
         RESOURCE_SERVICE_CACHE_TIMEOUT?: number,
         GLOBAL_CATALOG_API_CACHE_TIMEOUT?: number,
         IAM_OPENID_CONFIG_CACHE_TIMEOUT?: number,
-        
+
         ALLOWED_ACCOUNTS?: string[],
         ALLOWED_USERS?: string[],
         IBMID_APIKEY?: string,
         IBMID_APIKEY_LOGIN_CACHE_TIMEOUT?: number
-    })
+    }, requestApi?: (options: AxiosRequestConfig) => Promise<AxiosResponse>)
 
     getPasscode(): Promise<Response>
 
