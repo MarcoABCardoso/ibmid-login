@@ -95,6 +95,8 @@ const responseMap = {
     'https://api.foo-region.assistant.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_conversation/foo_endpoint': () => Promise.resolve(proxySuccessResponse),
     'https://api.foo-region.speech-to-text.watson.cloud.ibm.com/instances/foo_resource_guid_no_keys_speech-to-text/foo_endpoint': () => Promise.resolve(proxySuccessResponse),
     'https://api.dataplatform.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://accounts.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://billing.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
 
 }
 

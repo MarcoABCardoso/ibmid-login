@@ -540,6 +540,26 @@ describe('IBMid service', () => {
                     })
             })
         })
+        describe('For account resources', () => {
+            it('Builds URL from resource', (done) => {
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'account', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
+                        done()
+                    })
+            })
+        })
+        describe('For billing resources', () => {
+            it('Builds URL from resource', (done) => {
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'billing', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
+                        done()
+                    })
+            })
+        })
         describe('For functions services', () => {
             it('Builds URL from resource', (done) => {
                 ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id_functions', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
