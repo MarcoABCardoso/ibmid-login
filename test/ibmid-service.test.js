@@ -602,6 +602,36 @@ describe('IBMid service', () => {
                     })
             })
         })
+        describe('For controller resources', () => {
+            it('Builds URL from resource', (done) => {
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'controller', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
+                        done()
+                    })
+            })
+        })
+        describe('For catalog resources', () => {
+            it('Builds URL from resource', (done) => {
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'catalog', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
+                        done()
+                    })
+            })
+        })
+        describe('For search resources', () => {
+            it('Builds URL from resource', (done) => {
+                ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'search', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                    .catch(err => done.fail(err))
+                    .then(data => {
+                        expect(data).toEqual({ 'body': { 'foo': 'data' }, 'headers': { 'foo': 'headers' }, 'statusCode': 200 })
+                        done()
+                    })
+            })
+        })
         describe('For functions services', () => {
             it('Builds URL from resource', (done) => {
                 ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path', resourceID: 'foo_resource_id_functions', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
