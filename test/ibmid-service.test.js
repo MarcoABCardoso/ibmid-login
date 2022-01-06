@@ -499,6 +499,48 @@ describe('IBMid service', () => {
                         })
                 })
             })
+            describe('When the service is a CE instance', () => {
+                it('Forwards the request to the service URL', (done) => {
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_endpoint', resourceID: 'foo_resource_id_codeengine', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                        .catch(err => done.fail(err))
+                        .then(data => {
+                            expect(data).toEqual({
+                                'statusCode': 200,
+                                'headers': { 'foo': 'headers' },
+                                'body': { 'foo': 'ce-data' },
+                            })
+                            done()
+                        })
+                })
+            })
+            describe('When the service is a CE service', () => {
+                it('Forwards the request to the service URL', (done) => {
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/services/foo_endpoint', resourceID: 'foo_resource_id_codeengine', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })
+                        .catch(err => done.fail(err))
+                        .then(data => {
+                            expect(data).toEqual({
+                                'statusCode': 200,
+                                'headers': { 'foo': 'headers' },
+                                'body': { 'foo': 'ce-service-data' },
+                            })
+                            done()
+                        })
+                })
+            })
+            describe('When the service is a CE application', () => {
+                it('Forwards the request to the service URL', (done) => {
+                    ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_endpoint', resourceID: 'foo_resource_id_codeengine', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid', headers: { 'x-ce-application': 'foo-application' } })
+                        .catch(err => done.fail(err))
+                        .then(data => {
+                            expect(data).toEqual({
+                                'statusCode': 200,
+                                'headers': { 'foo': 'headers' },
+                                'body': { 'foo': 'ce-app-data' },
+                            })
+                            done()
+                        })
+                })
+            })
             describe('When service request fails', () => {
                 it('Forwards the error response', (done) => {
                     ibmidService.proxy({ method: 'FOO_METHOD', url: '/foo_path_error', resourceID: 'foo_resource_id', token: 'foo_token', refreshToken: 'foo_refresh_token', accountID: 'foo_account_guid' })

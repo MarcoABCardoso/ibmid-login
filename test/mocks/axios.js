@@ -26,6 +26,7 @@ let resourceFailureResponse = { response: { status: 500, data: { foo: 'error' },
 let resourceNoKeysSuccessResponse = { status: 200, data: { id: 'foo_resource_id_no_keys', guid: 'foo_resource_guid_no_keys' } }
 let resourceNoKeysConversationSuccessResponse = { status: 200, data: { id: 'foo_resource_id_no_keys_conversation', guid: 'foo_resource_guid_no_keys_conversation', region_id: 'foo-region' } }
 let resourceNoKeysSTTSuccessResponse = { status: 200, data: { id: 'foo_resource_id_no_keys_speech-to-text', guid: 'foo_resource_guid_no_keys_speech-to-text', region_id: 'foo-region' } }
+let resourceCESuccessResponse = { status: 200, data: { id: 'foo_resource_id_codeengine', guid: 'foo_resource_id_codeengine', region_id: 'foo-region', extensions: { virtual_private_endpoints: { dns_domain: 'foo_namespace.appdomain.cloud' } } } }
 let resourceMissingSuccessResponse = { status: 200, data: { status_code: 404 } }
 let functionsResourceSuccessResponse = { status: 200, data: { guid: '_:foo_resource_guid::', resource_id: 'functions', region_id: 'foo-region' } }
 let dashboardsResourceSuccessResponse = { status: 200, data: { id: 'foo_resource_id_dashboards', guid: 'foo_resource_guid_dashboards' } }
@@ -37,9 +38,13 @@ let noKeysSuccessResponse = { status: 200, data: { resources: [] } }
 let dashboardKeysSuccessResponse = { status: 200, data: { resources: [{ role: 'Manager', guid: 'foo_account_guid', credentials: { api_endpoint_url: 'foo_service_url/daas/' } }] } }
 let endpointsKeysSuccessResponse = { status: 200, data: { resources: [{ role: 'Manager', guid: 'foo_account_guid', credentials: { endpoints: 'foo_endpoints_url/endpoints' } }] } }
 let endpointsSuccessResponse = { status: 200, data: { foo: { path: { to: { endpoint: 'foo_global_resource_url' } } } } }
+
 let proxySuccessResponse = { status: 200, data: { foo: 'data' }, headers: { foo: 'headers' } }
 let proxyFailureResponse = { response: { status: 500, data: { foo: 'error' }, headers: { foo: 'error-headers' } } }
 
+let proxyCESuccessResponse = { status: 200, data: { foo: 'ce-data' }, headers: { foo: 'headers' } }
+let proxyCEServiceSuccessResponse = { status: 200, data: { foo: 'ce-service-data' }, headers: { foo: 'headers' } }
+let proxyCEApplicationSuccessResponse = { status: 200, data: { foo: 'ce-app-data' }, headers: { foo: 'headers' } }
 
 const responseMap = {
     [`${IAM_URL}/identity/.well-known/openid-configuration`]: () => Promise.resolve(openIdConfigSuccessResponse),
@@ -75,6 +80,7 @@ const responseMap = {
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys`]: () => Promise.resolve(resourceNoKeysSuccessResponse),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_conversation`]: () => Promise.resolve(resourceNoKeysConversationSuccessResponse),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_no_keys_speech-to-text`]: () => Promise.resolve(resourceNoKeysSTTSuccessResponse),
+    [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_codeengine`]: () => Promise.resolve(resourceCESuccessResponse),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_missing`]: () => Promise.resolve(resourceMissingSuccessResponse),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_functions`]: () => Promise.resolve(functionsResourceSuccessResponse),
     [`${RESOURCE_CONTROLLER_URL}/v2/resource_instances/foo_resource_id_dashboards`]: () => Promise.resolve(dashboardsResourceSuccessResponse),
@@ -97,6 +103,12 @@ const responseMap = {
     'https://api.dataplatform.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
     'https://accounts.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
     'https://billing.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://proxy.foo-region.codeengine.cloud.ibm.com/apis/serving.knative.dev/v1/namespaces/foo_namespace/services/foo_endpoint': () => Promise.resolve(proxyCEServiceSuccessResponse),
+    'https://proxy.foo-region.codeengine.cloud.ibm.com/api/v1/namespaces/foo_namespace/foo_endpoint': () => Promise.resolve(proxyCESuccessResponse),
+    'https://foo-application.foo_namespace.foo-region.codeengine.appdomain.cloud/foo_endpoint': () => Promise.resolve(proxyCEApplicationSuccessResponse),
+
+
+
 
 }
 
