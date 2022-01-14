@@ -106,6 +106,7 @@ const responseMap = {
     'https://resource-controller.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
     'https://globalcatalog.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
     'https://api.global-search-tagging.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
+    'https://tags.global-search-tagging.cloud.ibm.com/foo_path': () => Promise.resolve(proxySuccessResponse),
     'https://proxy.foo-region.codeengine.cloud.ibm.com/apis/serving.knative.dev/v1/namespaces/foo_namespace/services/foo_endpoint': () => Promise.resolve(proxyCEServiceSuccessResponse),
     'https://proxy.foo-region.codeengine.cloud.ibm.com/api/v1/namespaces/foo_namespace/foo_endpoint': () => Promise.resolve(proxyCESuccessResponse),
     'https://foo-application.foo_namespace.foo-region.codeengine.appdomain.cloud/foo_endpoint': () => Promise.resolve(proxyCEApplicationSuccessResponse),
